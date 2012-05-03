@@ -40,7 +40,23 @@ public class TSHttpPostSender implements ReportSender
      */
     public TSHttpPostSender(String key)
     {
+        this(key, "192.168.1.28", "/acra/upload", 3000);
+    }
+
+    /**
+     * Create a TSHttpPostSender
+     *
+     * @param key the key get from the crash report system administrator
+     * @param host the host of the server
+     * @param path the path
+     * @param port the port
+     */
+    public TSHttpPostSender(String key, String host, String path, int port)
+    {
         ErrorReporter.getInstance().putCustomData("TS_APP_KEY", key);
+        this.host = host;
+        this.path = path;
+        this.port = port;
     }
 
     @Override
@@ -124,7 +140,7 @@ public class TSHttpPostSender implements ReportSender
 
         try {
             // 构建uri
-            URI uri = URIUtils.createURI("http", HOST, PORT, PATH, null, null);
+            URI uri = URIUtils.createURI("http", host, port, path, null, null);
             Log.d(TAG, uri.toASCIIString());
             // 创建post
             HttpPost post = new HttpPost(uri);
@@ -178,7 +194,7 @@ public class TSHttpPostSender implements ReportSender
     }
 
     private static final String TAG = TSHttpPostSender.class.getSimpleName();
-    private static final String HOST = "192.168.1.28";
-    private static final String PATH = "/acra/upload";
-    private static final int PORT = 3000;
+    private String host;
+    private String path;
+    private int port;
 }
