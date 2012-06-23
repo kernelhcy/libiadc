@@ -2,7 +2,7 @@ package com.tsoftime;
 
 import android.app.Activity;
 import android.os.Bundle;
-import com.tsoftime.ImageManager;
+import android.widget.ListView;
 
 public class DemoActivity extends Activity
 {
@@ -15,7 +15,14 @@ public class DemoActivity extends Activity
 
         ImageManager.init(getApplicationContext());
         imageManager = ImageManager.instance();
+
+        listView = (ListView) findViewById(R.id.listview);
+        adaper = new ImageListViewAdaper(getApplicationContext());
+        listView.setAdapter(adaper);
     }
 
     private ImageManager imageManager;
+
+    private ListView listView;
+    private ImageListViewAdaper adaper;
 }
