@@ -1,10 +1,13 @@
 package com.tsoftime;
 
 import android.content.Context;
+import android.os.Bundle;
+import android.os.Message;
 import android.util.Log;
 
-import java.util.ArrayList;
+import java.io.File;
 import java.util.HashMap;
+import java.util.PriorityQueue;
 
 /**
  * ImageManager
@@ -30,7 +33,7 @@ public class ImageManager
 
     /**
      * Get the ONLY instance of the ImageManager.
-     * @return
+     * @return the only instance of the image manager
      */
     public static ImageManager instance()
     {
@@ -48,7 +51,8 @@ public class ImageManager
     {
         Log.d(TAG, String.format("get image %s %d", url, priority));
         ImageTask task = new ImageTask(url, params, callBack, priority);
-        taskQueue.enqueue(task);
+        newTasksQueue.enqueue(task);
+        runTasks();
     }
 
     /**
@@ -63,6 +67,45 @@ public class ImageManager
         getImage(url, params, callBack, 0);
     }
 
+    /**
+     * Find a idle thread and run an image task on it.
+     * If no thread is idle, just do nothing.
+     * When some download thread is idle, it will send some message to the image manager. When the image manager
+     * receive the message, it will call this function to run task again.
+     */
+    public void runTasks()
+    {
+        for(ImageDownloadThread t : threads.values())
+        {
+            if (newTasksQueue.size() <= 0) break;
+            if (t.getStatus() == ImageDownloadThread.IDLE_STATUS) {
+                t.setStatus(ImageDownloadThread.RUNNING_STATUS);
+                ImageTask task = newTasksQueue.dequeue();
+                if(task == null) break;     // no more task.
+                Message msg = t.getHandler().obtainMessage(ImageDownloadThreadHandler.DOWNLOAD_IMAGE);
+                Bundle bundle = new Bundle();
+                bundle.putString("url", task.getUrl());
+                bundle.putString("save_file_path", getImageStorePath());
+                msg.setData(bundle);
+                t.getHandler().sendMessage(msg);
+                runningTasksMap.put(task.getUrl(), task);
+            }
+        }
+    }
+
+    /**
+     * Get the path to which the image is stored.
+     * @return
+     */
+    private String getImageStorePath()
+    {
+        StringBuilder sb = new StringBuilder();
+        File externalCacheDir = context.getExternalCacheDir();
+        sb.append(externalCacheDir.getAbsolutePath());              // external cache dir
+        sb.append(config.getImageStoreDir());                       // image cache dir
+        sb.append("image_").append(System.currentTimeMillis());     // image name with ext
+        return sb.toString();
+    }
 
     /**
      * You SHOUlD NEVER create an instance by yourself.
@@ -71,11 +114,15 @@ public class ImageManager
     public ImageManager(Context context)
     {
         this.context = context;
-        this.taskQueue = new ImageTaskQueue(10);
+        this.newTasksQueue = new ImageTaskQueue(10);
+        this.runningTasksMap = new HashMap<String, ImageTask>();
         this.handler = new ImageManagerHandler(this);
 
         this.downloadThreadNumber = 3;
-        this.threads = new ArrayList<ImageDownloadThread>();
+        this.threads = new HashMap<String, ImageDownloadThread>();
+
+        this.config = ImageMangerConfig.instance();
+
         initDownloadTreads();
     }
 
@@ -99,7 +146,7 @@ public class ImageManager
     private void initDownloadTreads()
     {
         // quit the old threads.
-        for(ImageDownloadThread t : threads) {
+        for(ImageDownloadThread t : threads.values()) {
             t.getHandler().sendEmptyMessage(ImageDownloadThreadHandler.QUIT);
         }
         threads.clear();
@@ -107,8 +154,9 @@ public class ImageManager
         // create new download threads
         for(int i = 0; i < downloadThreadNumber; ++i) {
             ImageDownloadThread t = new ImageDownloadThread(handler);
-            t.setName(String.format("ImageDownloadThread-%d", i));
-            threads.add(t);
+            t.setName(String.format("ImageDownloadThread-%d-%d", System.currentTimeMillis(), i));
+            PriorityQueue<ImageTask> queue = new PriorityQueue<ImageTask>();
+            threads.put(t.getName(), t);
             t.start();
         }
     }
@@ -117,19 +165,47 @@ public class ImageManager
      * Get the task queue
      * @return
      */
-    ImageTaskQueue getTaskQueue()
+    ImageTaskQueue getNewTasksQueue()
     {
-        return taskQueue;
+        return newTasksQueue;
+    }
+
+    /**
+     * Remove a thread.
+     * This thread MUST has quited.
+     *
+     * @param threadName the name of the thread.
+     */
+    void removeThread(String threadName)
+    {
+        ImageDownloadThread t = threads.remove(threadName);
+    }
+
+    /**
+     * Set the status of thread `threadName`
+     * @param threadName
+     * @param newStatus
+     */
+    void setThreadStatus(String threadName, int newStatus)
+    {
+        ImageDownloadThread t = threads.get(threadName);
+        if (t != null) {
+            t.setStatus(newStatus);
+        }
     }
 
     private Context context;
-    private ImageTaskQueue taskQueue;
+    private ImageTaskQueue newTasksQueue;                           // The new tasks queue.
+    private HashMap<String, ImageTask> runningTasksMap;             // The running tasks map.
+
     private ImageManagerHandler handler;
 
-    private int downloadThreadNumber;                    // 下载线程的数量
-    private ArrayList<ImageDownloadThread> threads;     // 下载线程
+    private int downloadThreadNumber;                               // the number of the download threads.
+    private HashMap<String, ImageDownloadThread> threads;           // download threads
 
     private static ImageManager mInstance = null;
+
+    private ImageMangerConfig config;
 
     private static final String TAG = ImageManager.class.getSimpleName();
 }

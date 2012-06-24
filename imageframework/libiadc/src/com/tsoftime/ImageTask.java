@@ -53,6 +53,66 @@ class ImageTask implements Comparable
         return priority - it.priority;
     }
 
+    public ImageTaskCallBack getCallBack()
+    {
+        return callBack;
+    }
+
+    public void setCallBack(ImageTaskCallBack callBack)
+    {
+        this.callBack = callBack;
+    }
+
+    public String getUrl()
+    {
+        return url;
+    }
+
+    public void setUrl(String url)
+    {
+        this.url = url;
+    }
+
+    public HashMap<String, Object> getParams()
+    {
+        return params;
+    }
+
+    public void setParams(HashMap<String, Object> params)
+    {
+        this.params = params;
+    }
+
+    public long getTotal()
+    {
+        return total;
+    }
+
+    public void setTotal(long total)
+    {
+        this.total = total;
+    }
+
+    public long getHasRead()
+    {
+        return hasRead;
+    }
+
+    public void setHasRead(long hasRead)
+    {
+        this.hasRead = hasRead;
+    }
+
+    public int getPriority()
+    {
+        return priority;
+    }
+
+    public void setPriority(int priority)
+    {
+        this.priority = priority;
+    }
+
     private ImageTaskCallBack callBack;
     private String url;
     private HashMap<String, Object> params;

@@ -11,9 +11,14 @@ import android.util.Log;
  */
 public class ImageDownloadThread extends Thread
 {
+    public static final int IDLE_STATUS = 100;      // the thread is idle.
+    public static final int RUNNING_STATUS = 99;    // the thread is downloading an image.
+    public static final int QUITING_STATUS = 98;    // the thread is quiting.
+
     public ImageDownloadThread(ImageManagerHandler h)
     {
         this.imageManagerHandler = h;
+        this.status = IDLE_STATUS;
     }
 
     @Override
@@ -31,6 +36,26 @@ public class ImageDownloadThread extends Thread
     {
         return handler;
     }
+
+    /**
+     * Get the status of the thread.
+     * @return the status
+     */
+    public synchronized int getStatus()
+    {
+        return status;
+    }
+
+    /**
+     * Set the status of the thread.
+     * @param status new status.
+     */
+    public synchronized void setStatus(int status)
+    {
+        this.status = status;
+    }
+
+    private int status;             // the status of the download thread.
 
     private ImageDownloadThreadHandler handler;
     private ImageManagerHandler imageManagerHandler;
