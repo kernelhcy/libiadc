@@ -43,7 +43,7 @@ class ImageTask implements Comparable
      */
     public void onDownloadingDown(Bitmap bmp)
     {
-        if (callBack != null) callBack.onDownloadingDone(bmp, params);
+        if (callBack != null) callBack.onDownloadingDone(1, bmp, params);
     }
 
     @Override

@@ -14,6 +14,7 @@ import android.os.Message;
 public class ImageDownloadThreadHandler extends Handler
 {
     public static final int DOWNLOAD_IMAGE = 1;
+    public static final int QUIT = 2;
 
     public ImageDownloadThreadHandler(ImageDownloadThread thread, ImageManagerHandler handler)
     {
@@ -40,6 +41,9 @@ public class ImageDownloadThreadHandler extends Handler
             case DOWNLOAD_IMAGE:
                 download(msg);
                 break;
+            case QUIT:
+                getLooper().quit();
+                return;
             default:
                 Message resultMsg = imageManagerHandler.obtainMessage(ImageManagerHandler.ERROR);
                 resultMsg.obj = String.format("Unknown message type : %d", msg.what);
@@ -72,7 +76,7 @@ public class ImageDownloadThreadHandler extends Handler
         resultMsg = imageManagerHandler.obtainMessage(ImageManagerHandler.DOWNLOADING_PROGRESS);
         imageManagerHandler.sendMessage(resultMsg);
 
-        resultMsg = imageManagerHandler.obtainMessage(ImageManagerHandler.DOWNLAOD_DONE);
+        resultMsg = imageManagerHandler.obtainMessage(ImageManagerHandler.DOWNLOAD_DONE);
         imageManagerHandler.sendMessage(resultMsg);
     }
     private ImageDownloadThread thread;
