@@ -1,5 +1,6 @@
 package com.tsoftime;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -8,6 +9,8 @@ import com.tsoftime.messeage.params.DownloadingProgressParams;
 import com.tsoftime.messeage.params.ErrorParams;
 import com.tsoftime.messeage.params.ImageDownloadDoneParams;
 import com.tsoftime.messeage.params.ThreadQuitedParams;
+
+import java.util.Random;
 
 /**
  * The image downloading thread handler
@@ -93,37 +96,81 @@ public class ImageDownloadThreadHandler extends Handler
         Message resultMsg;
         Bundle params = msg.getData();
         if (params == null) {
-            resultMsg = imageManagerHandler.obtainMessage(ImageManagerHandler.ERROR);
-            ErrorParams eparams = new ErrorParams();
-            eparams.threadName = getLooper().getThread().getName();
-            eparams.code = -1;
-            eparams.desc = "msg.getData() == null";
-            resultMsg.obj = eparams;
-            imageManagerHandler.sendMessage(resultMsg);
+            sendError(-1, "msg.getData() == null");
             return;
         }
 
-        String url = params.getString("url");
+        url = params.getString("url");
         String fildPath = params.getString("save_file_path");
         Log.d(TAG, String.format("%s downloads %s, store in %s", getLooper().getThread().getName(), url, fildPath));
         long total = 0, hasRead = 0;
         // download...
 
+        Random r = new Random();
+        total = r.nextInt(10000);
+        hasRead = 0;
+        while (hasRead < total)
+        {
+            try { Thread.sleep(300);} catch (InterruptedException e) {}
+            hasRead += r.nextInt((int)total / 10 + 10);
+            sendDownloadingProgress(total, hasRead);
+        }
 
-        resultMsg = imageManagerHandler.obtainMessage(ImageManagerHandler.DOWNLOADING_PROGRESS);
-        DownloadingProgressParams downloadingProgressParams = new DownloadingProgressParams();
-        downloadingProgressParams.threadName = getLooper().getThread().getName();
-        downloadingProgressParams.total = 1000;
-        downloadingProgressParams.hasRead = 10;
-        resultMsg.obj = downloadingProgressParams;
-        imageManagerHandler.sendMessage(resultMsg);
-
-        resultMsg = imageManagerHandler.obtainMessage(ImageManagerHandler.DOWNLOAD_DONE);
-        ImageDownloadDoneParams imageDownloadDoneParams = new ImageDownloadDoneParams();
-        imageDownloadDoneParams.threadName = getLooper().getThread().getName();
-        resultMsg.obj = imageDownloadDoneParams;
-        imageManagerHandler.sendMessage(resultMsg);
+        sendDownloadDown(null);
     }
+
+    /**
+     * Send download done message to the image manager.
+     * @param image the image.
+     */
+    private void sendDownloadDown(Bitmap image)
+    {
+        Message msg;
+        msg = imageManagerHandler.obtainMessage(ImageManagerHandler.DOWNLOAD_DONE);
+        ImageDownloadDoneParams params = new ImageDownloadDoneParams();
+        params.threadName = getLooper().getThread().getName();
+        params.url = url;
+        params.image = image;
+        msg.obj = params;
+        imageManagerHandler.sendMessage(msg);
+    }
+
+    /**
+     * Send downloading progress message to the image manager.
+     * @param total     the total length
+     * @param hasRead   has read length
+     */
+    private void sendDownloadingProgress(long total, long hasRead)
+    {
+        Message msg;
+        msg = imageManagerHandler.obtainMessage(ImageManagerHandler.DOWNLOADING_PROGRESS);
+        DownloadingProgressParams params = new DownloadingProgressParams();
+        params.threadName = getLooper().getThread().getName();
+        params.total = total;
+        params.hasRead = hasRead;
+        params.url = url;
+        msg.obj = params;
+        imageManagerHandler.sendMessage(msg);
+    }
+
+    /**
+     * Send error message to the image manager.
+     * @param code sendError code
+     * @param desc sendError description
+     */
+    private void sendError(int code, String desc)
+    {
+        Message msg;
+        msg = imageManagerHandler.obtainMessage(ImageManagerHandler.ERROR);
+        ErrorParams params = new ErrorParams();
+        params.threadName = getLooper().getThread().getName();
+        params.code = code;
+        params.desc = desc;
+        msg.obj = params;
+        imageManagerHandler.sendMessage(msg);
+    }
+
+    private String url;
     private ImageDownloadThread thread;
     private ImageManagerHandler imageManagerHandler;
     private static final String TAG = ImageDownloadThreadHandler.class.getSimpleName();

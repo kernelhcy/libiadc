@@ -64,13 +64,16 @@ public class ImageManagerHandler extends Handler
             case DOWNLOAD_DONE:
                 ImageDownloadDoneParams imageDownlodDoneParams = (ImageDownloadDoneParams) msg.obj;
                 Log.d(TAG, String.format("Receive DOWNLOAD_DONE message. %s",imageDownlodDoneParams.threadName));
-
+                imageManager.onDownloadDonw(imageDownlodDoneParams.url, imageDownlodDoneParams.image);
                 imageManager.setThreadStatus(imageDownlodDoneParams.threadName, ImageDownloadThread.IDLE_STATUS);
                 break;
             case DOWNLOADING_PROGRESS:
                 DownloadingProgressParams downloadingProgressParams = (DownloadingProgressParams) msg.obj;
-                Log.d(TAG, String.format("Receive DOWNLOADING_PROGRESS message. %s"
-                                , downloadingProgressParams.threadName));
+//                Log.d(TAG, String.format("Receive DOWNLOADING_PROGRESS message. %s"
+//                                , downloadingProgressParams.threadName));
+                imageManager.onDownloadingProgress(downloadingProgressParams.url
+                                                    , downloadingProgressParams.total
+                                                    , downloadingProgressParams.hasRead);
                 break;
             case NO_SUCH_IMAGE:
                 NoSuchImageParams noSuchImageParams = (NoSuchImageParams) msg.obj;

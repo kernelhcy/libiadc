@@ -17,13 +17,11 @@ public class DemoActivity extends Activity
         imageManager = ImageManager.instance();
 
         listView = (ListView) findViewById(R.id.listview);
-        adaper = new ImageListViewAdaper(getApplicationContext());
+        adaper = new ImageListViewAdaper(getApplicationContext(), listView);
 
-        adaper.addURL("http://www.google.com/1");
-        adaper.addURL("http://www.google.com/2");
-        adaper.addURL("http://www.google.com/3");
-        adaper.addURL("http://www.google.com/4");
-        adaper.addURL("http://www.google.com/5");
+        for(int i = 0; i < 20; ++i){
+            adaper.addURL("http://www.google.com/" + i);
+        }
 
         listView.setAdapter(adaper);
     }

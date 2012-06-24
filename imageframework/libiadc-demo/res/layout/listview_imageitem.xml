@@ -1,11 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
               android:layout_width="fill_parent"
-              android:layout_height="fill_parent">
+              android:layout_height="fill_parent"
+              android:padding="5dp"
+        >
     <ImageView android:layout_width="fill_parent"
-               android:layout_height="fill_parent"
+               android:layout_height="wrap_content"
                android:id="@+id/listview_item_image">
 
     </ImageView>
+    <ProgressBar android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/listview_item_progressbar"
+            style="@android:style/Widget.ProgressBar.Horizontal">
+
+    </ProgressBar>
+    <TextView android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:text="10%   10/100"
+              android:id="@+id/listview_item_progressbar_label">
+    </TextView>
 </LinearLayout>

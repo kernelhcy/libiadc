@@ -50,7 +50,11 @@ class ImageTask implements Comparable
     public int compareTo(Object o)
     {
         ImageTask it = (ImageTask)o;
-        return priority - it.priority;
+        if (priority > 0 && it.priority > 0) {
+            return priority - it.priority;
+        }
+
+        return (int)(secondaryPriority - it.secondaryPriority);
     }
 
     public ImageTaskCallBack getCallBack()
@@ -113,9 +117,15 @@ class ImageTask implements Comparable
         this.priority = priority;
     }
 
+    public void setSecondaryPriority(long secondaryPriority)
+    {
+        this.secondaryPriority = secondaryPriority;
+    }
+
     private ImageTaskCallBack callBack;
     private String url;
     private HashMap<String, Object> params;
     private long total, hasRead;
-    private int priority;
+    private int priority;               // the main priority, MUST > 0
+    private long secondaryPriority;     // the second priority, if the main priority <= 0, use this as the priority.
 }

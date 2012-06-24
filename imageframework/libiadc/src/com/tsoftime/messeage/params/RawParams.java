@@ -9,4 +9,5 @@ package com.tsoftime.messeage.params;
 public class RawParams
 {
     public String threadName;       // The name of the thread
+    public String url;              // The url of the image
 }

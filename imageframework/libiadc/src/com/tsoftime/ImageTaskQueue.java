@@ -14,7 +14,7 @@ public class ImageTaskQueue
 {
     public ImageTaskQueue()
     {
-        queue = new PriorityQueue<ImageTask>();
+        this(10);
     }
 
     public ImageTaskQueue(int initialCapacity)
@@ -24,12 +24,14 @@ public class ImageTaskQueue
 
     public ImageTask dequeue()
     {
-        return queue.poll();
+        return  queue.poll();
     }
 
     public void enqueue(ImageTask task)
     {
-        queue.add(task);
+        // set the secondary priority of this task.
+        task.setSecondaryPriority(System.currentTimeMillis());
+        queue.offer(task);
     }
 
     public int size()

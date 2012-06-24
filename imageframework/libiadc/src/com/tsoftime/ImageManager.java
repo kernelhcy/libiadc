@@ -1,6 +1,7 @@
 package com.tsoftime;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Message;
 import android.util.Log;
@@ -42,10 +43,16 @@ public class ImageManager
 
     /**
      * Get an image.
+     *
+     * NOTE:
+     *  If you call getImage with the priority parameter, you MUST always call it with priority parameter.
+     *  If you call getImage without the priority parameter, you MUST always call it without priority parameter.
+     *  If you call these two functions in your app, you will get a puzzle result...
+     *
      * @param url       the url of the image. like : "http://www.google.com/images/1.png"
      * @param params    the parameters you want to receive in the ImageTaskCallBack callbacks.
      * @param callBack  the callback. Used to notify you the progress.
-     * @param priority  the priority. The bigger, the higher priority to downloading.
+     * @param priority  the priority. The bigger, the higher priority to downloading. MUST > 0!
      */
     public void getImage(String url, HashMap<String, Object> params, ImageTaskCallBack callBack, int priority)
     {
@@ -192,6 +199,31 @@ public class ImageManager
         if (t != null) {
             t.setStatus(newStatus);
         }
+    }
+
+    /**
+     * Called by the ImageMangerHandler when it receives DOWNLOADING_PROGRESS message.
+     * @param url       the url of the image, used to find the image task.
+     * @param total     the total length
+     * @param hasRead   the length has read
+     */
+    void onDownloadingProgress(String url, long total, long hasRead)
+    {
+        ImageTask task = runningTasksMap.get(url);
+        if (task == null) return;
+        task.getCallBack().onGettingProgress(total, hasRead, task.getParams());
+    }
+
+    /**
+     * Called by the ImageManagerHandler when it received DOWNLOADED_DONE message.
+     * @param url       the url of the image, used to find the image task.
+     * @param image     the image bit map
+     */
+    void onDownloadDonw(String url, Bitmap image)
+    {
+        ImageTask task = runningTasksMap.get(url);
+        if (task == null) return;
+        task.getCallBack().onDownloadingDone(1, image, task.getParams());
     }
 
     private Context context;
