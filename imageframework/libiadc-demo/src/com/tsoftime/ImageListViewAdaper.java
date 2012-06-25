@@ -58,19 +58,18 @@ public class ImageListViewAdaper extends BaseAdapter
             view = inflater.inflate(R.layout.listview_imageitem, null);
         }
         ImageView iv = (ImageView) view.findViewById(R.id.listview_item_image);
+        iv.setImageBitmap(null);
         ProgressBar progressBar = (ProgressBar) view.findViewById(R.id.listview_item_progressbar);
         ImageManager imageManager = ImageManager.instance();
         Data data = datas.get(i);
-        progressBar.setMax((int)data.total);
-        progressBar.setProgress((int)data.hasRead);
+        progressBar.setMax(data.total);
+        progressBar.setProgress(data.hasRead);
         TextView tv = (TextView) view.findViewById(R.id.listview_item_progressbar_label);
         tv.setText(String.format("%d%%        %d/%d", (int)((float)data.hasRead * 100 / (float)data.total)
                                     , data.hasRead, data.total));
-        iv.setImageBitmap(data.image);
-        if (!data.hasAdded) {
-            imageManager.getImage(urls.get(i), null, callBacks.get(i));
-            data.hasAdded = true;
-        }
+        tv = (TextView) view.findViewById(R.id.listview_item_url_label);
+        tv.setText(urls.get(i));
+        imageManager.getImage(urls.get(i), null, callBacks.get(i));
         return view;
     }
 
@@ -100,8 +99,8 @@ public class ImageListViewAdaper extends BaseAdapter
             View view = listView.getChildAt(wantedPosition);
             if (view!= null) {
                 ProgressBar progressBar = (ProgressBar) view.findViewById(R.id.listview_item_progressbar);
-                progressBar.setMax((int)total);
-                progressBar.setProgress((int)hasGotten);
+                progressBar.setMax(total);
+                progressBar.setProgress(hasGotten);
                 TextView tv = (TextView) view.findViewById(R.id.listview_item_progressbar_label);
                 tv.setText(String.format("%d%%        %d/%d", (int)((float)data.hasRead * 100 / (float)data.total)
                                                                             , data.hasRead, data.total));
@@ -110,15 +109,10 @@ public class ImageListViewAdaper extends BaseAdapter
         @Override
         public void onDownloadingDone(int status, Bitmap bmp, HashMap<String, Object> params)
         {
-            Data data = datas.get(index);
-            if (data != null) {
-                data.image = bmp;
-            }
-
             int wantedPosition;
             wantedPosition = index - (listView.getFirstVisiblePosition() - listView.getHeaderViewsCount());
             if (wantedPosition < 0 || wantedPosition >= listView.getChildCount() - listView.getHeaderViewsCount()) {
-                //Log.w("ImageListViewAdapter", "wantedPosition < 0 || wantedPosition > listView.getChildCount()");
+                Log.w("ImageListViewAdapter", "wantedPosition < 0 || wantedPosition > listView.getChildCount()");
                 return;
             }
             View view = listView.getChildAt(wantedPosition);
@@ -134,8 +128,6 @@ public class ImageListViewAdaper extends BaseAdapter
     private class Data
     {
         public int total = 0, hasRead = 0;
-        public boolean hasAdded = false;
-        public Bitmap image;
     }
     private ArrayList<Data> datas;
     private ListView listView;

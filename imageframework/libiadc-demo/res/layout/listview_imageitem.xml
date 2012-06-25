@@ -6,8 +6,8 @@
               android:layout_height="fill_parent"
               android:padding="5dp"
         >
-    <ImageView android:layout_width="50dp"
-               android:layout_height="50dp"
+    <ImageView android:layout_width="150dp"
+               android:layout_height="150dp"
                android:scaleType="centerInside"
                android:id="@+id/listview_item_image">
 
@@ -28,5 +28,13 @@
               android:layout_toRightOf="@id/listview_item_image"
               android:layout_below="@id/listview_item_progressbar"
               android:id="@+id/listview_item_progressbar_label">
+    </TextView>
+    <TextView android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginLeft="3dp"
+              android:text="http://www.google.com/asdf.jpg"
+              android:layout_toRightOf="@id/listview_item_image"
+              android:layout_below="@id/listview_item_progressbar_label"
+              android:id="@+id/listview_item_url_label">
     </TextView>
 </RelativeLayout>

@@ -5,8 +5,11 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Message;
 import android.util.Log;
+import com.tsoftime.cache.ImageCacheManager;
 
 import java.io.File;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 
@@ -115,7 +118,13 @@ public class ImageManager
         File externalCacheDir = context.getExternalCacheDir();
         sb.append(externalCacheDir.getAbsolutePath());              // external cache dir
         sb.append(config.getImageStoreDir());                       // image cache dir
-        sb.append("image_").append(System.currentTimeMillis());     // image name with ext
+        Date now = Calendar.getInstance().getTime();
+        sb.append("/").append(now.getYear());
+        sb.append("/").append(now.getMonth());
+        sb.append("/").append(now.getDay());
+        sb.append("/").append(now.getHours());
+        sb.append("/").append(now.getMinutes());
+        sb.append("/image_").append(System.currentTimeMillis());     // image name with ext
         return sb.toString();
     }
 
@@ -165,7 +174,7 @@ public class ImageManager
 
         // create new download threads
         for(int i = 0; i < downloadThreadNumber; ++i) {
-            ImageDownloadThread t = new ImageDownloadThread(handler);
+            ImageDownloadThread t = new ImageDownloadThread(handler, context);
             t.setName(String.format("ImageDownloadThread-%d-%d", System.currentTimeMillis(), i));
             PriorityQueue<ImageTask> queue = new PriorityQueue<ImageTask>();
             threads.put(t.getName(), t);
@@ -224,13 +233,17 @@ public class ImageManager
      * @param status    the status
      * @param url       the url of the image, used to find the image task. When an error occurs, this parameter is
      *                  the description of this error.
-     * @param image     the image bit map
      */
-    void onDownloadDonw(int status, String url, Bitmap image)
+    void onDownloadDone(int status, String url, Bitmap bmp)
     {
         ImageTask task = runningTasksMap.get(url);
         if (task == null) return;
-        task.getCallBack().onDownloadingDone(status, image, task.getParams());
+        task.getCallBack().onDownloadingDone(status, bmp, task.getParams());
+    }
+
+    Context getContext()
+    {
+        return context;
     }
 
     private Context context;

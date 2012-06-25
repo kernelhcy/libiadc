@@ -1,11 +1,14 @@
 package com.tsoftime;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import com.tsoftime.cache.ImageCacheManager;
+import com.tsoftime.cache.ImageURLPathPair;
 import com.tsoftime.messeage.params.*;
 
 import java.io.File;
@@ -50,7 +53,9 @@ public class ImageDownloadThreadHandler extends Handler
     public ImageDownloadThreadHandler(ImageDownloadThread thread, ImageManagerHandler handler)
     {
         this.thread = thread;
+        this.context = this.thread.getContext();
         this.imageManagerHandler = handler;
+        this.imageCacheManager = new ImageCacheManager(context);
     }
 
     /**
@@ -104,6 +109,14 @@ public class ImageDownloadThreadHandler extends Handler
         Log.d(TAG, String.format("%s downloads %s, store in %s", getLooper().getThread().getName(), urlStr, fildPath));
         int total = 0, hasRead = 0;
 
+        // find the image from the cache.
+        Bitmap bmp = imageCacheManager.getImage(urlStr);
+        if (bmp != null) {
+            sendDownloadingProgress(100, 100);
+            sendDownloadDown(bmp, fildPath);
+            return;
+        }
+
         try {
             URL url = new URL(urlStr);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -151,8 +164,21 @@ public class ImageDownloadThreadHandler extends Handler
             return;
         }
 
-        sendDownloadDown(image);
+        // save to cache
+        ImageURLPathPair pair = ImageURLPathPair.select(urlStr, context);
+        if (pair == null) {
+            pair = new ImageURLPathPair();
+        }
+        pair.setPath(fildPath);
+        pair.setUrl(urlStr);
+        if(pair.save(context) < 0) {
+            sendError(-1, "Save to cache error.");
+            return;
+        }
+
+        sendDownloadDown(image, fildPath);
     }
+
 
     /**
      * Send no such image message to the image manager.
@@ -172,15 +198,17 @@ public class ImageDownloadThreadHandler extends Handler
     /**
      * Send download done message to the image manager.
      * @param image the image.
+     * @param path the path
      */
-    private void sendDownloadDown(Bitmap image)
+    private void sendDownloadDown(Bitmap image, String path)
     {
         Message msg;
         msg = imageManagerHandler.obtainMessage(ImageManagerHandler.DOWNLOAD_DONE);
         ImageDownloadDoneParams params = new ImageDownloadDoneParams();
         params.threadName = getLooper().getThread().getName();
         params.url = urlStr;
-        params.image = image;
+        params.bmp = image;
+        params.path = path;
         msg.obj = params;
         imageManagerHandler.sendMessage(msg);
     }
@@ -221,6 +249,8 @@ public class ImageDownloadThreadHandler extends Handler
     }
 
     private String urlStr;
+    private Context context;
+    private ImageCacheManager imageCacheManager;
     private ImageDownloadThread thread;
     private ImageManagerHandler imageManagerHandler;
     private static final String TAG = ImageDownloadThreadHandler.class.getSimpleName();

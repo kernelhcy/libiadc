@@ -1,5 +1,6 @@
 package com.tsoftime;
 
+import android.content.Context;
 import android.os.Looper;
 
 import android.os.Handler;
@@ -15,10 +16,11 @@ public class ImageDownloadThread extends Thread
     public static final int RUNNING_STATUS = 99;    // the thread is downloading an image.
     public static final int QUITING_STATUS = 98;    // the thread is quiting.
 
-    public ImageDownloadThread(ImageManagerHandler h)
+    public ImageDownloadThread(ImageManagerHandler h, Context context)
     {
         this.imageManagerHandler = h;
         this.status = IDLE_STATUS;
+        this.context = context;
     }
 
     @Override
@@ -55,8 +57,13 @@ public class ImageDownloadThread extends Thread
         this.status = status;
     }
 
-    private int status;             // the status of the download thread.
+    public Context getContext()
+    {
+        return context;
+    }
 
+    private int status;             // the status of the download thread.
+    private Context context;
     private ImageDownloadThreadHandler handler;
     private ImageManagerHandler imageManagerHandler;
     private static final String TAG = ImageDownloadThread.class.getSimpleName();

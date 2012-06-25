@@ -3,6 +3,7 @@ package com.tsoftime;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import com.tsoftime.cache.ImageURLPathPair;
 import com.tsoftime.messeage.params.*;
 
 /**
@@ -63,10 +64,10 @@ public class ImageManagerHandler extends Handler
         {
             case DOWNLOAD_DONE:
                 ImageDownloadDoneParams imageDownlodDoneParams = (ImageDownloadDoneParams) msg.obj;
-                Log.d(TAG, String.format("Receive DOWNLOAD_DONE message. %s",imageDownlodDoneParams.threadName));
-                imageManager.onDownloadDonw(ImageManager.SUCCESS,
-                                            imageDownlodDoneParams.url, imageDownlodDoneParams.image);
                 imageManager.setThreadStatus(imageDownlodDoneParams.threadName, ImageDownloadThread.IDLE_STATUS);
+                Log.d(TAG, String.format("Receive DOWNLOAD_DONE message. %s",imageDownlodDoneParams.threadName));
+                imageManager.onDownloadDone(ImageManager.SUCCESS,
+                                        imageDownlodDoneParams.url, imageDownlodDoneParams.bmp);
                 break;
             case DOWNLOADING_PROGRESS:
                 DownloadingProgressParams downloadingProgressParams = (DownloadingProgressParams) msg.obj;
@@ -79,13 +80,13 @@ public class ImageManagerHandler extends Handler
             case NO_SUCH_IMAGE:
                 NoSuchImageParams noSuchImageParams = (NoSuchImageParams) msg.obj;
                 Log.d(TAG, String.format("Receive NO_SUCH_IMAGE message. %s", noSuchImageParams.threadName));
-                imageManager.onDownloadDonw(ImageManager.NO_SUCH_IMAGE, null, null);
+                imageManager.onDownloadDone(ImageManager.NO_SUCH_IMAGE, null, null);
                 imageManager.setThreadStatus(noSuchImageParams.threadName, ImageDownloadThread.IDLE_STATUS);
                 break;
             case ERROR:
                 ErrorParams errorParams = (ErrorParams) msg.obj;
                 Log.d(TAG, String.format("Receive ERROR message. %s %s", errorParams.threadName, errorParams.desc));
-                imageManager.onDownloadDonw(ImageManager.ERROR, errorParams.desc, null);
+                imageManager.onDownloadDone(ImageManager.ERROR, errorParams.desc, null);
                 imageManager.setThreadStatus(errorParams.threadName, ImageDownloadThread.IDLE_STATUS);
                 break;
             case THREAD_QUITED:
@@ -102,6 +103,19 @@ public class ImageManagerHandler extends Handler
         imageManager.runTasks();
     }
 
+    /**
+     * Save this file to image cache.
+     * @param url   the url
+     * @param path  the path
+     * @return  -1 for error.
+     */
+    private long saveToCache(String url, String path)
+    {
+        ImageURLPathPair pair = new ImageURLPathPair();
+        pair.setPath(path);
+        pair.setUrl(url);
+        return  pair.save(imageManager.getContext());
+    }
 
     private static final String TAG = ImageManagerHandler.class.getSimpleName();
     private ImageManager imageManager;

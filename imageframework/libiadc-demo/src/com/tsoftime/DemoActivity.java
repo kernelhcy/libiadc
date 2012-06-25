@@ -20,7 +20,7 @@ public class DemoActivity extends Activity
         adaper = new ImageListViewAdaper(getApplicationContext(), listView);
 
         //http://vm-192-168-18-243.shengyun.grandcloud.cn/mig31/
-        for(int i = 0; i < 90; ++i){
+        for (int i = 1; i < 258; ++i) {
             adaper.addURL("http://vm-192-168-18-243.shengyun.grandcloud.cn/mig31/" + i + ".jpg");
         }
 

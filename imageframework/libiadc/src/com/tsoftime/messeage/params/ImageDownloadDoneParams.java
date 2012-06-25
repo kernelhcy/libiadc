@@ -10,5 +10,6 @@ import android.graphics.Bitmap;
  */
 public class ImageDownloadDoneParams extends RawParams
 {
-    public Bitmap image;
+    public String path;
+    public Bitmap bmp;
 }
