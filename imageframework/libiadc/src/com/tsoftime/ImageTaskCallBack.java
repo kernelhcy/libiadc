@@ -22,7 +22,7 @@ public abstract class ImageTaskCallBack
      * @param hasGotten     the size of the part we have gotten
      * @param params        the parameters you have passed to the image manager
      */
-    public void onGettingProgress(long total, long hasGotten, HashMap<String, Object> params)
+    public void onGettingProgress(int total, int hasGotten, HashMap<String, Object> params)
     {
         // do nothing.
     }

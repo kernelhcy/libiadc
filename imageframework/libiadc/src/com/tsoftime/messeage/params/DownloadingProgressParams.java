@@ -8,6 +8,6 @@ package com.tsoftime.messeage.params;
  */
 public class DownloadingProgressParams extends RawParams
 {
-    public long total;      // the total length of the image
-    public long hasRead;    // we have gotten.
+    public int total;      // the total length of the image
+    public int hasRead;    // we have gotten.
 }

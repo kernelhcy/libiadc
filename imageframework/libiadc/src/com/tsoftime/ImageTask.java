@@ -30,7 +30,7 @@ class ImageTask implements Comparable
      * @param total     the total length of the image
      * @param hasRead   the length of the part we have gotten
      */
-    public void onDownloadingProgress(long total, long hasRead)
+    public void onDownloadingProgress(int total, int hasRead)
     {
         this.total = total;
         this.hasRead = hasRead;

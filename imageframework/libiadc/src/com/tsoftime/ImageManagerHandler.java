@@ -64,7 +64,8 @@ public class ImageManagerHandler extends Handler
             case DOWNLOAD_DONE:
                 ImageDownloadDoneParams imageDownlodDoneParams = (ImageDownloadDoneParams) msg.obj;
                 Log.d(TAG, String.format("Receive DOWNLOAD_DONE message. %s",imageDownlodDoneParams.threadName));
-                imageManager.onDownloadDonw(imageDownlodDoneParams.url, imageDownlodDoneParams.image);
+                imageManager.onDownloadDonw(ImageManager.SUCCESS,
+                                            imageDownlodDoneParams.url, imageDownlodDoneParams.image);
                 imageManager.setThreadStatus(imageDownlodDoneParams.threadName, ImageDownloadThread.IDLE_STATUS);
                 break;
             case DOWNLOADING_PROGRESS:
@@ -78,10 +79,14 @@ public class ImageManagerHandler extends Handler
             case NO_SUCH_IMAGE:
                 NoSuchImageParams noSuchImageParams = (NoSuchImageParams) msg.obj;
                 Log.d(TAG, String.format("Receive NO_SUCH_IMAGE message. %s", noSuchImageParams.threadName));
+                imageManager.onDownloadDonw(ImageManager.NO_SUCH_IMAGE, null, null);
+                imageManager.setThreadStatus(noSuchImageParams.threadName, ImageDownloadThread.IDLE_STATUS);
                 break;
             case ERROR:
                 ErrorParams errorParams = (ErrorParams) msg.obj;
                 Log.d(TAG, String.format("Receive ERROR message. %s %s", errorParams.threadName, errorParams.desc));
+                imageManager.onDownloadDonw(ImageManager.ERROR, errorParams.desc, null);
+                imageManager.setThreadStatus(errorParams.threadName, ImageDownloadThread.IDLE_STATUS);
                 break;
             case THREAD_QUITED:
                 ThreadQuitedParams threadQuitedParams = (ThreadQuitedParams) msg.obj;

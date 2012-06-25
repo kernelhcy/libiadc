@@ -20,6 +20,11 @@ import java.util.PriorityQueue;
  */
 public class ImageManager
 {
+    // the status code
+    public static final int SUCCESS = 1;            // the image has been successfully downloaded
+    public static final int ERROR = -1;             // an error occurs.
+    public static final int NO_SUCH_IMAGE = -2;     // Can not find the image.
+
     /**
      * Initial the ImageManger.
      * You MUST call this function before any operation on the ImageManager.
@@ -207,7 +212,7 @@ public class ImageManager
      * @param total     the total length
      * @param hasRead   the length has read
      */
-    void onDownloadingProgress(String url, long total, long hasRead)
+    void onDownloadingProgress(String url, int total, int hasRead)
     {
         ImageTask task = runningTasksMap.get(url);
         if (task == null) return;
@@ -216,14 +221,16 @@ public class ImageManager
 
     /**
      * Called by the ImageManagerHandler when it received DOWNLOADED_DONE message.
-     * @param url       the url of the image, used to find the image task.
+     * @param status    the status
+     * @param url       the url of the image, used to find the image task. When an error occurs, this parameter is
+     *                  the description of this error.
      * @param image     the image bit map
      */
-    void onDownloadDonw(String url, Bitmap image)
+    void onDownloadDonw(int status, String url, Bitmap image)
     {
         ImageTask task = runningTasksMap.get(url);
         if (task == null) return;
-        task.getCallBack().onDownloadingDone(1, image, task.getParams());
+        task.getCallBack().onDownloadingDone(status, image, task.getParams());
     }
 
     private Context context;

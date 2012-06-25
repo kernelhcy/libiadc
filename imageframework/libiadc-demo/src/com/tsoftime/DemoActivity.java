@@ -19,8 +19,9 @@ public class DemoActivity extends Activity
         listView = (ListView) findViewById(R.id.listview);
         adaper = new ImageListViewAdaper(getApplicationContext(), listView);
 
-        for(int i = 0; i < 20; ++i){
-            adaper.addURL("http://www.google.com/" + i);
+        //http://vm-192-168-18-243.shengyun.grandcloud.cn/mig31/
+        for(int i = 0; i < 90; ++i){
+            adaper.addURL("http://vm-192-168-18-243.shengyun.grandcloud.cn/mig31/" + i + ".jpg");
         }
 
         listView.setAdapter(adaper);
