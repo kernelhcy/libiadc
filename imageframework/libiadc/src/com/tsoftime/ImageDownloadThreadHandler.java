@@ -45,7 +45,7 @@ import java.util.Random;
  * User: huangcongyu2006
  * Date: 12-6-23 AM11:40
  */
-public class ImageDownloadThreadHandler extends Handler
+class ImageDownloadThreadHandler extends Handler
 {
     public static final int DOWNLOAD_IMAGE = 1;     // the message type of downloading an image
     public static final int QUIT = 2;               // the message type of quit
@@ -141,10 +141,7 @@ public class ImageDownloadThreadHandler extends Handler
             // We found that the mkdirs function had a delay before the directory was really created!
             // WTF...
             int i = 0;
-            while (!dir.exists() && i < 100) {
-                dir.mkdirs();
-                ++i;    // At most loop 100 times.
-            }
+            while (!dir.exists() && !dir.mkdirs() && (++i) < 100);
 
             if (!outFile.exists()) outFile.createNewFile();
             FileOutputStream fos = new FileOutputStream(outFile);

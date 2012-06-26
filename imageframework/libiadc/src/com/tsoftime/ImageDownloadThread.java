@@ -10,7 +10,7 @@ import android.util.Log;
  * User: huangcongyu2006
  * Date: 12-6-23 AM11:39
  */
-public class ImageDownloadThread extends Thread
+class ImageDownloadThread extends Thread
 {
     public static final int IDLE_STATUS = 100;      // the thread is idle.
     public static final int RUNNING_STATUS = 99;    // the thread is downloading an image.

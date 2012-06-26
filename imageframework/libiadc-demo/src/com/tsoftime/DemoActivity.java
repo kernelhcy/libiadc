@@ -4,6 +4,9 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.widget.ListView;
 
+/**
+ * 示例Activity
+ */
 public class DemoActivity extends Activity
 {
     /** Called when the activity is first created. */
@@ -13,8 +16,8 @@ public class DemoActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
+        // 初始化ImageManager。
         ImageManager.init(getApplicationContext());
-        imageManager = ImageManager.instance();
 
         listView = (ListView) findViewById(R.id.listview);
         adaper = new ImageListViewAdaper(getApplicationContext(), listView);
@@ -26,8 +29,6 @@ public class DemoActivity extends Activity
 
         listView.setAdapter(adaper);
     }
-
-    private ImageManager imageManager;
 
     private ListView listView;
     private ImageListViewAdaper adaper;

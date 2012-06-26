@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
+ * List View Adapter
  * User: huangcongyu2006
  * Date: 12-6-23 AM10:08
  */
@@ -22,14 +23,14 @@ public class ImageListViewAdaper extends BaseAdapter
         this.listView = listView;
         urls = new ArrayList<String>();
         callBacks = new ArrayList<ImageTaskCallBack>();
-        datas = new ArrayList<Data>();
+        datas = new ArrayList<DownlaodProgress>();
         inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
     public void addURL(String url)
     {
         urls.add(url);
-        datas.add(new Data());
+        datas.add(new DownlaodProgress());
         callBacks.add(new MyCallBack(callBacks.size()));
     }
 
@@ -59,23 +60,30 @@ public class ImageListViewAdaper extends BaseAdapter
         }
         ImageView iv = (ImageView) view.findViewById(R.id.listview_item_image);
         iv.setImageBitmap(null);
+
         ProgressBar progressBar = (ProgressBar) view.findViewById(R.id.listview_item_progressbar);
-        ImageManager imageManager = ImageManager.instance();
-        Data data = datas.get(i);
+        DownlaodProgress data = datas.get(i);
         progressBar.setMax(data.total);
         progressBar.setProgress(data.hasRead);
+
         TextView tv = (TextView) view.findViewById(R.id.listview_item_progressbar_label);
         tv.setText(String.format("%d%%        %d/%d", (int)((float)data.hasRead * 100 / (float)data.total)
                                     , data.hasRead, data.total));
         tv = (TextView) view.findViewById(R.id.listview_item_url_label);
         tv.setText(urls.get(i));
+
+        // 调用getImage获取图片
+        ImageManager imageManager = ImageManager.instance();
         imageManager.getImage(urls.get(i), null, callBacks.get(i));
         return view;
     }
 
     private ArrayList<String> urls;
 
-    private class MyCallBack extends ImageTaskCallBack
+    /**
+     * 获取图片的回调函数。
+     */
+    private class MyCallBack implements ImageTaskCallBack
     {
         public MyCallBack(int index)
         {
@@ -84,12 +92,14 @@ public class ImageListViewAdaper extends BaseAdapter
         @Override
         public void onGettingProgress(int total, int hasGotten, HashMap<String, Object> params)
         {
-            Data data = datas.get(index);
+            DownlaodProgress data = datas.get(index);
+            // 保存下载进度
             if (data != null) {
                 data.hasRead = hasGotten;
                 data.total = total;
             }
 
+            // 获取对应的list view item。
             int wantedPosition;
             wantedPosition = index - (listView.getFirstVisiblePosition() - listView.getHeaderViewsCount());
             if (wantedPosition < 0 || wantedPosition >= listView.getChildCount() - listView.getHeaderViewsCount()) {
@@ -97,6 +107,7 @@ public class ImageListViewAdaper extends BaseAdapter
                 return;
             }
             View view = listView.getChildAt(wantedPosition);
+
             if (view!= null) {
                 ProgressBar progressBar = (ProgressBar) view.findViewById(R.id.listview_item_progressbar);
                 progressBar.setMax(total);
@@ -117,19 +128,27 @@ public class ImageListViewAdaper extends BaseAdapter
             }
             View view = listView.getChildAt(wantedPosition);
             if (view!= null) {
+                // 下载完成。显示图片。
                 ImageView iv = (ImageView) view.findViewById(R.id.listview_item_image);
                 iv.setImageBitmap(bmp);
+                /*
+                 * 这里不对bmp参数做任何保存！让libiadc进行图片缓存处理。
+                 */
             }
         }
         private int index;
     }
     private ArrayList<ImageTaskCallBack> callBacks;
 
-    private class Data
+    /**
+     * 保存每张图片的下载进度。
+     * 在滑动listview的时候，需要重新设置图片的下载进度。
+     */
+    private class DownlaodProgress
     {
         public int total = 0, hasRead = 0;
     }
-    private ArrayList<Data> datas;
+    private ArrayList<DownlaodProgress> datas;
     private ListView listView;
     private LayoutInflater inflater;
 }

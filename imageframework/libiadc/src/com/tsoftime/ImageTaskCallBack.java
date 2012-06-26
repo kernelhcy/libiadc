@@ -14,7 +14,7 @@ import java.util.HashMap;
  * User: huangcongyu2006
  * Date: 12-6-23 AM10:20
  */
-public abstract class ImageTaskCallBack
+public interface ImageTaskCallBack
 {
     /**
      * When get some part of the image, the image manager will call this function to tell you the downloading progress.
@@ -22,10 +22,7 @@ public abstract class ImageTaskCallBack
      * @param hasGotten     the size of the part we have gotten
      * @param params        the parameters you have passed to the image manager
      */
-    public void onGettingProgress(int total, int hasGotten, HashMap<String, Object> params)
-    {
-        // do nothing.
-    }
+    public void onGettingProgress(int total, int hasGotten, HashMap<String, Object> params);
 
     /**
      * When the image is downloaded, the image manager call this function to tell you.

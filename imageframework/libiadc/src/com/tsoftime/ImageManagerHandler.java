@@ -44,7 +44,7 @@ import com.tsoftime.messeage.params.*;
  * User: huangcongyu2006
  * Date: 12-6-23 AM11:35
  */
-public class ImageManagerHandler extends Handler
+class ImageManagerHandler extends Handler
 {
     public static final int DOWNLOAD_DONE = 1;          // The image has been downloaded.
     public static final int DOWNLOADING_PROGRESS = 2;   // The image is being downloaded. Notify the progress.

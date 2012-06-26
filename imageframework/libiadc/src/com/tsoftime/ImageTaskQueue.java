@@ -10,7 +10,7 @@ import java.util.Queue;
  * User: huangcongyu2006
  * Date: 12-6-23 AM11:19
  */
-public class ImageTaskQueue
+class ImageTaskQueue
 {
     public ImageTaskQueue()
     {

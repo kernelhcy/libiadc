@@ -17,6 +17,9 @@ import java.util.PriorityQueue;
  * ImageManager
  *
  * Manage the images' downloading and caching.
+ * The image manager will start some download threads to download images.
+ * The default number of download threads is one.
+ * You can set the number of download threads by yourself. More download threads, more memory is needed!
  *
  * User: huangcongyu2006
  * Date: 12-6-23 AM9:40
@@ -88,7 +91,7 @@ public class ImageManager
      * When some download thread is idle, it will send some message to the image manager. When the image manager
      * receive the message, it will call this function to run task again.
      */
-    public void runTasks()
+    void runTasks()
     {
         for(ImageDownloadThread t : threads.values())
         {
@@ -132,14 +135,14 @@ public class ImageManager
      * You SHOUlD NEVER create an instance by yourself.
      * @param context
      */
-    public ImageManager(Context context)
+    private ImageManager(Context context)
     {
         this.context = context;
         this.newTasksQueue = new ImageTaskQueue(10);
         this.runningTasksMap = new HashMap<String, ImageTask>();
         this.handler = new ImageManagerHandler(this);
 
-        this.downloadThreadNumber = 3;
+        this.downloadThreadNumber = 1;
         this.threads = new HashMap<String, ImageDownloadThread>();
 
         this.config = ImageMangerConfig.instance();
@@ -152,6 +155,12 @@ public class ImageManager
      *
      * This function will kill all the old threads and create `number` new threads.
      * The old threads will finish all the downloading tasks which are being executed.
+     *
+     * <b>NOTE:</b>
+     *  If you start more download threads, the images will be downloaded faster. And more memory will be used.
+     *  If the images are too large, when the download threads have downloaded them, they will eat many memory
+     *  after being converted to bitmap.
+     *  So, you should have a deep look at how many download threads you need.
      *
      * @param number
      */
