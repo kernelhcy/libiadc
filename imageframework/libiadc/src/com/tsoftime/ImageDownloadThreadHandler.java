@@ -136,7 +136,16 @@ public class ImageDownloadThreadHandler extends Handler
             InputStream is = (InputStream) connection.getContent();
             File outFile = new File(fildPath);
             File dir = outFile.getParentFile();
-            if (!dir.exists()) dir.mkdirs();
+
+            // loop until the os has created the directory.
+            // We found that the mkdirs function had a delay before the directory was really created!
+            // WTF...
+            int i = 0;
+            while (!dir.exists() && i < 100) {
+                dir.mkdirs();
+                ++i;    // At most loop 100 times.
+            }
+
             if (!outFile.exists()) outFile.createNewFile();
             FileOutputStream fos = new FileOutputStream(outFile);
             byte[] buf = new byte[1024];

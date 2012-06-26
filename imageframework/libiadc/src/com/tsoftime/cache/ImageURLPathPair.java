@@ -28,7 +28,7 @@ public class ImageURLPathPair
      */
     public static ImageURLPathPair select(String url, Context ctx)
     {
-        SQLiteDatabase db = (new ImageCacheDatabaseHelper(ctx)).getWritableDatabase();
+        SQLiteDatabase db = (new ImageCacheDatabaseHelper(ctx)).getReadableDatabase();
         Cursor c = db.query(tableName, columns, "url=?", new String[]{url}, null, null, null, "1");
         c.moveToFirst();
         if (c.isAfterLast()) {
