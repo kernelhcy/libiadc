@@ -67,6 +67,10 @@ public class ImageManager
      */
     public void getImage(String url, HashMap<String, Object> params, ImageTaskCallBack callBack, int priority)
     {
+        if (url == null) {
+            callBack.onDownloadingDone(NO_SUCH_IMAGE, null, params);
+            return;
+        }
         Log.d(TAG, String.format("get image %s %d", url, priority));
         ImageTask task = new ImageTask(url, params, callBack, priority);
         newTasksQueue.enqueue(task);
