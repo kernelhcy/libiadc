@@ -8,7 +8,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import com.tsoftime.cache.ImageCacheManager;
-import com.tsoftime.cache.ImageURLPathPair;
 import com.tsoftime.messeage.params.*;
 
 import java.io.File;
@@ -18,7 +17,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Random;
 
 /**
  * The image downloading thread handler
@@ -76,7 +74,7 @@ class ImageDownloadThreadHandler extends Handler
         switch (msg.what)
         {
             case DOWNLOAD_IMAGE:
-                download(msg);
+                dealTheDownloadMessage(msg);
                 break;
             case QUIT:
                 resultMsg = imageManagerHandler.obtainMessage(ImageManagerHandler.THREAD_QUITED);
@@ -95,7 +93,7 @@ class ImageDownloadThreadHandler extends Handler
      * Download the image...
      * @param msg
      */
-    private void download(Message msg)
+    private void dealTheDownloadMessage(Message msg)
     {
         Bundle params = msg.getData();
         if (params == null) {
@@ -106,7 +104,6 @@ class ImageDownloadThreadHandler extends Handler
         urlStr = params.getString("url");
         String filePath = params.getString("save_file_path");
         Log.d(TAG, String.format("%s downloads %s, store in %s", getLooper().getThread().getName(), urlStr, filePath));
-        int total = 0, hasRead = 0;
 
         // find the image from the cache.
         Bitmap bmp = imageCacheManager.getImage(urlStr);
@@ -116,17 +113,43 @@ class ImageDownloadThreadHandler extends Handler
             return;
         }
 
+        // try to dealTheDownloadMessage the image...
+        if (!downloadImage(filePath)) return;
+
+        Bitmap image = BitmapFactory.decodeFile(filePath);
+        if (image == null) {
+            sendError(-1, "Deocde image from file error.");
+            return;
+        }
+
+        // save to cache
+        if(imageCacheManager.saveToCache(urlStr, filePath) < 0) {
+            sendError(-1, "Save to cache error.");
+            return;
+        }
+
+        sendDownloadDown(image, filePath);
+    }
+
+    /**
+     * Download the image.
+     * @param filePath the file path which the image will be stored to.
+     * @return true for success and false for error.
+     */
+    private boolean downloadImage(String filePath)
+    {
+        int total = 0, hasRead = 0;
         try {
             URL url = new URL(urlStr);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             int responseCode = connection.getResponseCode();
             if (responseCode == 404) {
                 sendNoSuchImage(urlStr);
-                return;
+                return false;
             }
             if (responseCode != 200) {
                 sendError(-1, String.format("Http error %d %s", responseCode, connection.getResponseMessage()));
-                return;
+                return false;
             }
 
             total = connection.getContentLength();
@@ -156,32 +179,13 @@ class ImageDownloadThreadHandler extends Handler
         } catch (MalformedURLException e) {
             e.printStackTrace();
             sendError(-1, e.getMessage());
-            return;
+            return false;
         } catch (IOException e) {
             e.printStackTrace();
             sendError(-1, e.getMessage());
-            return;
+            return false;
         }
-
-        Bitmap image = BitmapFactory.decodeFile(filePath);
-        if (image == null) {
-            sendError(-1, "Deocde image from file error.");
-            return;
-        }
-
-        // save to cache
-        ImageURLPathPair pair = ImageURLPathPair.select(urlStr, context);
-        if (pair == null) {
-            pair = new ImageURLPathPair();
-        }
-        pair.setPath(filePath);
-        pair.setUrl(urlStr);
-        if(pair.save(context) < 0) {
-            sendError(-1, "Save to cache error.");
-            return;
-        }
-
-        sendDownloadDown(image, filePath);
+        return true;
     }
 
 
