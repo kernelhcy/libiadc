@@ -36,6 +36,7 @@ public class DemoActivity extends Activity
         }
 
         listView.setAdapter(adaper);
+        listView.setFastScrollEnabled(true);
 //        listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
 //        {
 //            @Override

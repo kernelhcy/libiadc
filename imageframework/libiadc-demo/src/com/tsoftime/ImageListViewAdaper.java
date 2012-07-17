@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -23,15 +24,19 @@ public class ImageListViewAdaper extends BaseAdapter
         this.listView = listView;
         urls = new ArrayList<String>();
         callBacks = new ArrayList<ImageTaskCallBack>();
-        datas = new ArrayList<DownlaodProgress>();
+        datas = new ArrayList<DownloadProgress>();
         inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        hasDownloaded = new boolean[0];
     }
 
     public void addURL(String url)
     {
         urls.add(url);
-        datas.add(new DownlaodProgress());
+        datas.add(new DownloadProgress());
         callBacks.add(new MyCallBack(callBacks.size()));
+        boolean[] old = hasDownloaded;
+        hasDownloaded = new boolean[urls.size()];
+        System.arraycopy(old, 0, hasDownloaded, 0, old.length);
     }
 
     @Override
@@ -55,30 +60,40 @@ public class ImageListViewAdaper extends BaseAdapter
     @Override
     public View getView(int i, View view, ViewGroup viewGroup)
     {
+        ViewHolder holder;
         if (view == null) {
             view = inflater.inflate(R.layout.listview_imageitem, null);
+            holder = new ViewHolder();
+            holder.iv = (ImageView) view.findViewById(R.id.listview_item_image);
+            holder.pb = (ProgressBar) view.findViewById(R.id.listview_item_progressbar);
+            holder.tv = (TextView) view.findViewById(R.id.listview_item_progressbar_label);
+            holder.urlTv = (TextView) view.findViewById(R.id.listview_item_url_label);
+            view.setTag(holder);
+        } else {
+            holder = (ViewHolder) view.getTag();
         }
-        ImageView iv = (ImageView) view.findViewById(R.id.listview_item_image);
-        iv.setImageBitmap(null);
+        holder.iv.setImageBitmap(null);
 
-        ProgressBar progressBar = (ProgressBar) view.findViewById(R.id.listview_item_progressbar);
-        DownlaodProgress data = datas.get(i);
-        progressBar.setMax(data.total);
-        progressBar.setProgress(data.hasRead);
+        DownloadProgress data = datas.get(i);
+        holder.pb.setMax(data.total);
+        holder.pb.setProgress(data.hasRead);
 
-        TextView tv = (TextView) view.findViewById(R.id.listview_item_progressbar_label);
-        tv.setText(String.format("%d%%        %d/%d", (int)((float)data.hasRead * 100 / (float)data.total)
+        holder.tv.setText(String.format("%d%%        %d/%d", (int)((float)data.hasRead * 100 / (float)data.total)
                                     , data.hasRead, data.total));
-        tv = (TextView) view.findViewById(R.id.listview_item_url_label);
-        tv.setText(urls.get(i));
+        holder.urlTv.setText(urls.get(i));
 
         // 调用getImage获取图片
         ImageManager imageManager = ImageManager.instance();
-        imageManager.getImage(urls.get(i), null, callBacks.get(i));
+        if (hasDownloaded[i]) {
+            imageManager.getImage(urls.get(i), null, callBacks.get(i), ImageTask.TaskPriority.HIGH_PRIORITY);
+        } else {
+            imageManager.getImage(urls.get(i), null, callBacks.get(i));
+        }
         return view;
     }
 
     private ArrayList<String> urls;
+    private boolean[] hasDownloaded;
 
     /**
      * 获取图片的回调函数。
@@ -92,7 +107,7 @@ public class ImageListViewAdaper extends BaseAdapter
         @Override
         public void onGettingProgress(int total, int hasGotten, HashMap<String, Object> params)
         {
-            DownlaodProgress data = datas.get(index);
+            DownloadProgress data = datas.get(index);
             // 保存下载进度
             if (data != null) {
                 data.hasRead = hasGotten;
@@ -109,12 +124,12 @@ public class ImageListViewAdaper extends BaseAdapter
             View view = listView.getChildAt(wantedPosition);
 
             if (view!= null) {
-                ProgressBar progressBar = (ProgressBar) view.findViewById(R.id.listview_item_progressbar);
-                progressBar.setMax(total);
-                progressBar.setProgress(hasGotten);
-                TextView tv = (TextView) view.findViewById(R.id.listview_item_progressbar_label);
-                tv.setText(String.format("%d%%        %d/%d", (int)((float)data.hasRead * 100 / (float)data.total)
-                                                                            , data.hasRead, data.total));
+                ViewHolder holder = (ViewHolder) view.getTag();
+                holder.pb.setMax(total);
+                holder.pb.setProgress(hasGotten);
+                holder.tv.setText(String.format("%d%%        %d/%d",
+                                                        (int)((float)data.hasRead * 100 / (float)data.total)
+                                                        , data.hasRead, data.total));
             }
         }
         @Override
@@ -129,12 +144,13 @@ public class ImageListViewAdaper extends BaseAdapter
             View view = listView.getChildAt(wantedPosition);
             if (view!= null) {
                 // 下载完成。显示图片。
-                ImageView iv = (ImageView) view.findViewById(R.id.listview_item_image);
-                iv.setImageBitmap(bmp);
+                ViewHolder holder = (ViewHolder) view.getTag();
+                holder.iv.setImageBitmap(bmp);
                 /*
                  * 这里不对bmp参数做任何保存！让libiadc进行图片缓存处理。
                  */
             }
+            hasDownloaded[index] = true;
         }
         private int index;
     }
@@ -144,11 +160,22 @@ public class ImageListViewAdaper extends BaseAdapter
      * 保存每张图片的下载进度。
      * 在滑动listview的时候，需要重新设置图片的下载进度。
      */
-    private class DownlaodProgress
+    private class DownloadProgress
     {
         public int total = 0, hasRead = 0;
     }
-    private ArrayList<DownlaodProgress> datas;
+
+    /*
+     * view holder
+     */
+    private class ViewHolder
+    {
+        ProgressBar pb;
+        ImageView iv;
+        TextView tv, urlTv;
+    }
+
+    private ArrayList<DownloadProgress> datas;
     private ListView listView;
     private LayoutInflater inflater;
 }
