@@ -36,19 +36,19 @@ public class DemoActivity extends Activity
         }
 
         listView.setAdapter(adaper);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
-        {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
-            {
-                String url = (String) adaper.getItem(i);
-                Intent intent = new Intent(DemoActivity.this, ImageViewActivity.class);
-                intent.putExtra("url", url);
-                intent.putExtra("index", i);
-                intent.putExtras(urls);
-                startActivity(intent);
-            }
-        });
+//        listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
+//        {
+//            @Override
+//            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
+//            {
+//                String url = (String) adaper.getItem(i);
+//                Intent intent = new Intent(DemoActivity.this, ImageViewActivity.class);
+//                intent.putExtra("url", url);
+//                intent.putExtra("index", i);
+//                intent.putExtras(urls);
+//                startActivity(intent);
+//            }
+//        });
     }
 
     @Override

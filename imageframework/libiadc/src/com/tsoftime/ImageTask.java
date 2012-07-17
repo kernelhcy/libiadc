@@ -10,9 +10,39 @@ import java.util.HashMap;
  * User: huangcongyu2006
  * Date: 12-6-23 AM11:12
  */
-class ImageTask implements Comparable
+class ImageTask
 {
-    public ImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack, int priority)
+    // the priority
+    public enum TaskPriority{
+        LOW_PRIORITY            // low priority
+            {
+                @Override
+                public String toString()
+                {
+                    return "LowPriority";
+                }
+            },
+        DEFAULT_PRIORITY        // default priority
+            {
+                @Override
+                public String toString()
+                {
+                    return "DefaultPriority";
+                }
+            },
+        HIGH_PRIORITY           // high priority
+            {
+                @Override
+                public String toString()
+                {
+                    return "HighPriority";
+                }
+            };
+
+        public abstract String toString();
+    }
+
+    public ImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack, TaskPriority priority)
     {
         this.url = url;
         this.params = params;
@@ -22,7 +52,7 @@ class ImageTask implements Comparable
 
     public ImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack)
     {
-        this(url, params, callBack, 0);
+        this(url, params, callBack, TaskPriority.DEFAULT_PRIORITY);
     }
 
     /**
@@ -44,17 +74,6 @@ class ImageTask implements Comparable
     public void onDownloadingDown(Bitmap bmp)
     {
         if (callBack != null) callBack.onDownloadingDone(1, bmp, params);
-    }
-
-    @Override
-    public int compareTo(Object o)
-    {
-        ImageTask it = (ImageTask)o;
-        if (priority > 0 && it.priority > 0) {
-            return priority - it.priority;
-        }
-
-        return (int)(secondaryPriority - it.secondaryPriority);
     }
 
     public ImageTaskCallBack getCallBack()
@@ -107,25 +126,19 @@ class ImageTask implements Comparable
         this.hasRead = hasRead;
     }
 
-    public int getPriority()
+    public TaskPriority getPriority()
     {
         return priority;
     }
 
-    public void setPriority(int priority)
+    public void setPriority(TaskPriority priority)
     {
         this.priority = priority;
-    }
-
-    public void setSecondaryPriority(long secondaryPriority)
-    {
-        this.secondaryPriority = secondaryPriority;
     }
 
     private ImageTaskCallBack callBack;
     private String url;
     private HashMap<String, Object> params;
     private long total, hasRead;
-    private int priority;               // the main priority, MUST > 0
-    private long secondaryPriority;     // the second priority, if the main priority <= 0, use this as the priority.
+    private TaskPriority priority;
 }

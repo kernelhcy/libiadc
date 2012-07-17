@@ -64,7 +64,7 @@ class ImageDownloadThreadHandler extends Handler
      * The image manager send a DOWNLOAD_IMAGE message to the download thread to download a image.
      * The parameters are stored in the message's data member. Use msg.getDate() to get the parameters bundle.
      * The parameters contain:
-     *      "urlStr"               => the urlStr of the image.
+     *      "urlStr"            => the urlStr of the image.
      *      "save_file_path"    => the path to which the image will be stored.
      *
      * @param msg the message sent by the image manager.
@@ -97,7 +97,6 @@ class ImageDownloadThreadHandler extends Handler
      */
     private void download(Message msg)
     {
-        Message resultMsg;
         Bundle params = msg.getData();
         if (params == null) {
             sendError(-1, "msg.getData() == null");
@@ -105,15 +104,15 @@ class ImageDownloadThreadHandler extends Handler
         }
 
         urlStr = params.getString("url");
-        String fildPath = params.getString("save_file_path");
-        Log.d(TAG, String.format("%s downloads %s, store in %s", getLooper().getThread().getName(), urlStr, fildPath));
+        String filePath = params.getString("save_file_path");
+        Log.d(TAG, String.format("%s downloads %s, store in %s", getLooper().getThread().getName(), urlStr, filePath));
         int total = 0, hasRead = 0;
 
         // find the image from the cache.
         Bitmap bmp = imageCacheManager.getImage(urlStr);
         if (bmp != null) {
             sendDownloadingProgress(100, 100);
-            sendDownloadDown(bmp, fildPath);
+            sendDownloadDown(bmp, filePath);
             return;
         }
 
@@ -134,7 +133,7 @@ class ImageDownloadThreadHandler extends Handler
             String contentType = connection.getContentType();
             Log.d(TAG, contentType);
             InputStream is = (InputStream) connection.getContent();
-            File outFile = new File(fildPath);
+            File outFile = new File(filePath);
             File dir = outFile.getParentFile();
 
             // loop until the os has created the directory.
@@ -164,7 +163,7 @@ class ImageDownloadThreadHandler extends Handler
             return;
         }
 
-        Bitmap image = BitmapFactory.decodeFile(fildPath);
+        Bitmap image = BitmapFactory.decodeFile(filePath);
         if (image == null) {
             sendError(-1, "Deocde image from file error.");
             return;
@@ -175,14 +174,14 @@ class ImageDownloadThreadHandler extends Handler
         if (pair == null) {
             pair = new ImageURLPathPair();
         }
-        pair.setPath(fildPath);
+        pair.setPath(filePath);
         pair.setUrl(urlStr);
         if(pair.save(context) < 0) {
             sendError(-1, "Save to cache error.");
             return;
         }
 
-        sendDownloadDown(image, fildPath);
+        sendDownloadDown(image, filePath);
     }
 
 

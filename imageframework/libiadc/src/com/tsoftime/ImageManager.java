@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Message;
 import android.util.Log;
-import com.tsoftime.cache.ImageCacheManager;
 
 import java.io.File;
 import java.util.Calendar;
@@ -55,25 +54,21 @@ public class ImageManager
     /**
      * Get an image.
      *
-     * NOTE:
-     *  If you call getImage with the priority parameter, you MUST always call it with priority parameter.
-     *  If you call getImage without the priority parameter, you MUST always call it without priority parameter.
-     *  If you call these two functions in your app, you will get a puzzle result...
-     *
      * @param url       the url of the image. like : "http://www.google.com/images/1.png"
      * @param params    the parameters you want to receive in the ImageTaskCallBack callbacks.
      * @param callBack  the callback. Used to notify you the progress.
-     * @param priority  the priority. The bigger, the higher priority to downloading. MUST > 0!
+     * @param priority  the task priority.
      */
-    public void getImage(String url, HashMap<String, Object> params, ImageTaskCallBack callBack, int priority)
+    public void getImage(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
+                            , ImageTask.TaskPriority priority)
     {
         if (url == null) {
             callBack.onDownloadingDone(NO_SUCH_IMAGE, null, params);
             return;
         }
-        Log.d(TAG, String.format("get image %s %d", url, priority));
+        Log.d(TAG, String.format("get image %s %s", url, priority.toString()));
         ImageTask task = new ImageTask(url, params, callBack, priority);
-        newTasksQueue.enqueue(task);
+        newTasksQueues.enqueue(task);
         runTasks();
     }
 
@@ -86,7 +81,7 @@ public class ImageManager
      */
     public void getImage(String url, HashMap<String, Object> params, ImageTaskCallBack callBack)
     {
-        getImage(url, params, callBack, 0);
+        getImage(url, params, callBack, ImageTask.TaskPriority.DEFAULT_PRIORITY);
     }
 
     /**
@@ -99,10 +94,10 @@ public class ImageManager
     {
         for(ImageDownloadThread t : threads.values())
         {
-            if (newTasksQueue.size() <= 0) break;
+            if (newTasksQueues.size() <= 0) break;
             if (t.getStatus() == ImageDownloadThread.IDLE_STATUS) {
                 t.setStatus(ImageDownloadThread.RUNNING_STATUS);
-                ImageTask task = newTasksQueue.dequeue();
+                ImageTask task = newTasksQueues.dequeue();
                 if(task == null) break;     // no more task.
                 Message msg = t.getHandler().obtainMessage(ImageDownloadThreadHandler.DOWNLOAD_IMAGE);
                 Bundle bundle = new Bundle();
@@ -142,7 +137,7 @@ public class ImageManager
     private ImageManager(Context context)
     {
         this.context = context;
-        this.newTasksQueue = new ImageTaskQueue(10);
+        this.newTasksQueues = new ImageTaskQueues();
         this.runningTasksMap = new HashMap<String, ImageTask>();
         this.handler = new ImageManagerHandler(this);
 
@@ -199,9 +194,9 @@ public class ImageManager
      * Get the task queue
      * @return
      */
-    ImageTaskQueue getNewTasksQueue()
+    ImageTaskQueues getNewTasksQueues()
     {
-        return newTasksQueue;
+        return newTasksQueues;
     }
 
     /**
@@ -260,7 +255,7 @@ public class ImageManager
     }
 
     private Context context;
-    private ImageTaskQueue newTasksQueue;                           // The new tasks queue.
+    private ImageTaskQueues newTasksQueues;                         // The new tasks queue.
     private HashMap<String, ImageTask> runningTasksMap;             // The running tasks map.
 
     private ImageManagerHandler handler;
