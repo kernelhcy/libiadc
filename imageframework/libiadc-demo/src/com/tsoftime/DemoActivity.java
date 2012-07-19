@@ -1,12 +1,10 @@
 package com.tsoftime;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.View;
-import android.widget.AdapterView;
+import android.widget.AbsListView;
 import android.widget.ListView;
 
 /**
@@ -23,33 +21,49 @@ public class DemoActivity extends Activity
 
         // 初始化ImageManager。
         ImageManager.init(getApplicationContext());
+        ImageManager.instance().setDownloadThreadNumber(2);
 
         listView = (ListView) findViewById(R.id.listview);
         adaper = new ImageListViewAdaper(getApplicationContext(), listView);
 
         //http://vm-192-168-18-243.shengyun.grandcloud.cn/mig31/
-        final Bundle urls = new Bundle();
         for (int i = 1; i < 258; ++i) {
             String url = "http://vm-192-168-18-243.shengyun.grandcloud.cn/mig31/" + i + ".jpg";
             adaper.addURL(url);
-            urls.putString(String.format("%d", i), url);
         }
 
         listView.setAdapter(adaper);
         listView.setFastScrollEnabled(true);
-//        listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
-//        {
-//            @Override
-//            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
-//            {
-//                String url = (String) adaper.getItem(i);
-//                Intent intent = new Intent(DemoActivity.this, ImageViewActivity.class);
-//                intent.putExtra("url", url);
-//                intent.putExtra("index", i);
-//                intent.putExtras(urls);
-//                startActivity(intent);
-//            }
-//        });
+        listView.setOnScrollListener(new AbsListView.OnScrollListener()
+        {
+            private int firstVisibleItem, visibleItemCount;
+            @Override
+            public void onScrollStateChanged(AbsListView absListView, int scrollState)
+            {
+                ImageManager imageManager = ImageManager.instance();
+                switch (scrollState)
+                {
+                    case AbsListView.OnScrollListener.SCROLL_STATE_IDLE:
+                        Log.d(DemoActivity.class.getSimpleName(), "Scroll view idle.");
+                        imageManager.removeAllTasks();
+                        for (int i = 0, j = firstVisibleItem; i < visibleItemCount; ++i, ++j) {
+                            adaper.downloadImage(j);
+                            Log.d(DemoActivity.class.getSimpleName(), String.format("downloading ... %d.jpg", j));
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            @Override
+            public void onScroll(AbsListView absListView, int firstVisibleItem
+                                , int visibleItemCount, int totalItemCount)
+            {
+                this.firstVisibleItem = firstVisibleItem;
+                this.visibleItemCount = visibleItemCount;
+            }
+        });
     }
 
     @Override

@@ -9,7 +9,6 @@ import android.view.ViewGroup;
 import android.widget.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -85,11 +84,25 @@ public class ImageListViewAdaper extends BaseAdapter
         // 调用getImage获取图片
         ImageManager imageManager = ImageManager.instance();
         if (hasDownloaded[i]) {
-            imageManager.getImage(urls.get(i), null, callBacks.get(i), ImageTask.TaskPriority.HIGH_PRIORITY);
+            imageManager.dispatchImageTask(urls.get(i), null, callBacks.get(i), ImageTask.TaskPriority.HIGH_PRIORITY);
         } else {
-            imageManager.getImage(urls.get(i), null, callBacks.get(i));
+            imageManager.dispatchImageTask(urls.get(i), null, callBacks.get(i));
         }
         return view;
+    }
+
+    /**
+     * 下载第index张图片
+     * @param index
+     */
+    public void downloadImage(int index)
+    {
+        ImageManager imageManager = ImageManager.instance();
+        if (hasDownloaded[index]) {
+            imageManager.dispatchImageTask(urls.get(index), null, callBacks.get(index), ImageTask.TaskPriority.HIGH_PRIORITY);
+        } else {
+            imageManager.dispatchImageTask(urls.get(index), null, callBacks.get(index));
+        }
     }
 
     private ArrayList<String> urls;

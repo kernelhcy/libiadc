@@ -52,15 +52,17 @@ public class ImageManager
     }
 
     /**
-     * Get an image.
+     * Dispatch an image task.
+     *
+     * The task will be appended to the end of the downloading queue.
      *
      * @param url       the url of the image. like : "http://www.google.com/images/1.png"
      * @param params    the parameters you want to receive in the ImageTaskCallBack callbacks.
      * @param callBack  the callback. Used to notify you the progress.
      * @param priority  the task priority.
      */
-    public void getImage(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
-                            , ImageTask.TaskPriority priority)
+    public void dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
+        , ImageTask.TaskPriority priority)
     {
         if (url == null) {
             callBack.onDownloadingDone(NO_SUCH_IMAGE, null, params);
@@ -69,20 +71,38 @@ public class ImageManager
         Log.d(TAG, String.format("get image %s %s", url, priority.toString()));
         ImageTask task = new ImageTask(url, params, callBack, priority);
         newTasksQueues.enqueue(task);
+
+        // run the tasks.
         runTasks();
     }
 
     /**
-     * Get an image Use default priority.
+     * Dispatch an image task using default priority.
      *
      * @param url       the url of the image. like : "http://www.google.com/images/1.png"
      * @param params    the parameters you want to receive in the ImageTaskCallBack callbacks.
      * @param callBack  the callback. Used to notify you the progress.
      */
-    public void getImage(String url, HashMap<String, Object> params, ImageTaskCallBack callBack)
+    public void dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack)
     {
-        getImage(url, params, callBack, ImageTask.TaskPriority.DEFAULT_PRIORITY);
+        dispatchImageTask(url, params, callBack, ImageTask.TaskPriority.DEFAULT_PRIORITY);
     }
+
+    /**
+     * Remove all the download tasks.
+     *
+     * The tasks which are running will run go on.
+     */
+    public void removeAllTasks()
+    {
+        newTasksQueues.clear();
+    }
+
+    /*
+     * *************************************
+     *  Above is ALL the public interfaces.
+     * *************************************
+     */
 
     /**
      * Find a idle thread and run an image task on it.
@@ -176,6 +196,7 @@ public class ImageManager
     {
         // quit the old threads.
         for(ImageDownloadThread t : threads.values()) {
+            if (t.getHandler() == null) continue;
             t.getHandler().sendEmptyMessage(ImageDownloadThreadHandler.QUIT);
         }
         threads.clear();
@@ -188,15 +209,6 @@ public class ImageManager
             threads.put(t.getName(), t);
             t.start();
         }
-    }
-
-    /**
-     * Get the task queue
-     * @return
-     */
-    ImageTaskQueues getNewTasksQueues()
-    {
-        return newTasksQueues;
     }
 
     /**
