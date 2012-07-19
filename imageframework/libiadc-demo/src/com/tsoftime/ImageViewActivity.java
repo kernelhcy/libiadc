@@ -30,7 +30,7 @@ public class ImageViewActivity extends Activity
         HashMap<String, Object> params = new HashMap<String, Object>();
         params.put("url", url);
         params.put("index", index);
-        imageManager.getImage(url, params, callBack);
+        imageManager.dispatchImageTask(url, params, callBack);
 
 
     }
@@ -49,21 +49,21 @@ public class ImageViewActivity extends Activity
                 HashMap<String, Object> params = new HashMap<String, Object>();
                 params.put("url", url);
                 params.put("index", index);
-                imageManager.getImage(url, params, callBack);
+                imageManager.dispatchImageTask(url, params, callBack);
                 break;
             case 19:    //up
                 url = (String) urls.get(String.valueOf(--index));
                 params = new HashMap<String, Object>();
                 params.put("url", url);
                 params.put("index", index);
-                imageManager.getImage(url, params, callBack);
+                imageManager.dispatchImageTask(url, params, callBack);
                 break;
             case 20:    //down
                 url = (String) urls.get(String.valueOf(++index));
                 params = new HashMap<String, Object>();
                 params.put("url", url);
                 params.put("index", index);
-                imageManager.getImage(url, params, callBack);
+                imageManager.dispatchImageTask(url, params, callBack);
                 break;
         }
         return false;

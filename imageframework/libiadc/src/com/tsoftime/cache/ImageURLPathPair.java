@@ -40,10 +40,11 @@ public class ImageURLPathPair
         pair.id = c.getLong(0);
         pair.url = c.getString(1);
         pair.path = c.getString(2);
+        pair.useCount = c.getInt(3);
         try {
-            pair.createdAt = sdf.parse(c.getString(3));
+            pair.createdAt = sdf.parse(c.getString(4));
         } catch (ParseException e) {
-            Log.e(TAG, String.format("%s %s", c.getString(3), e.getMessage()));
+            Log.e(TAG, String.format("%s %s", c.getString(4), e.getMessage()));
             e.printStackTrace();
             c.close();
             db.close();
@@ -65,6 +66,7 @@ public class ImageURLPathPair
         cv.put("url", url);
         cv.put("path", path);
         cv.put("created_at", sdf.format(Calendar.getInstance().getTime()));
+        cv.put("use_count", useCount);
         if (id > 0) {
             cv.put("_id", id);
         }
@@ -104,13 +106,24 @@ public class ImageURLPathPair
         return id;
     }
 
+    public int getUseCount()
+    {
+        return useCount;
+    }
+
+    public void setUseCount(int useCount)
+    {
+        this.useCount = useCount;
+    }
+
     private long id = -1;
     private String url;
     private String path;
     private Date createdAt;
+    private int useCount;
 
     private static final String tableName = "image_cache_maps";
-    private static final String[] columns = new String[]{"_id", "url", "path", "created_at"};
+    private static final String[] columns = new String[]{"_id", "url", "path", "use_count", "created_at"};
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final String TAG = ImageURLPathPair.class.getSimpleName();
 }
