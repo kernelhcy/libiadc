@@ -56,20 +56,23 @@ public class ImageManager
      *
      * The task will be appended to the end of the downloading queue.
      *
-     * @param url       the url of the image. like : "http://www.google.com/images/1.png"
-     * @param params    the parameters you want to receive in the ImageTaskCallBack callbacks.
-     * @param callBack  the callback. Used to notify you the progress.
-     * @param priority  the task priority.
+     * @param url           the url of the image. like : "http://www.google.com/images/1.png"
+     * @param params        the parameters you want to receive in the ImageTaskCallBack callbacks.
+     * @param callBack      the callback. Used to notify you the progress.
+     * @param priority      the task priority.
+     * @param expireTime    the expire time(second). The image will be cached until the expire time exceeds.
+     *                      After the expire time exceeds, the image will be removed from the cache and get a new
+     *                      copy from the remote server.
      */
     public void dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
-        , ImageTask.TaskPriority priority)
+        , ImageTask.TaskPriority priority, long expireTime)
     {
         if (url == null) {
             callBack.onDownloadingDone(NO_SUCH_IMAGE, null, params);
             return;
         }
         Log.d(TAG, String.format("get image %s %s", url, priority.toString()));
-        ImageTask task = new ImageTask(url, params, callBack, priority);
+        ImageTask task = new ImageTask(url, params, callBack, priority, expireTime);
         newTasksQueues.enqueue(task);
 
         // run the tasks.
@@ -77,7 +80,7 @@ public class ImageManager
     }
 
     /**
-     * Dispatch an image task using default priority.
+     * Dispatch an image task using default priority and will never expire.
      *
      * @param url       the url of the image. like : "http://www.google.com/images/1.png"
      * @param params    the parameters you want to receive in the ImageTaskCallBack callbacks.
@@ -85,7 +88,7 @@ public class ImageManager
      */
     public void dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack)
     {
-        dispatchImageTask(url, params, callBack, ImageTask.TaskPriority.DEFAULT_PRIORITY);
+        dispatchImageTask(url, params, callBack, ImageTask.TaskPriority.DEFAULT_PRIORITY, Long.MAX_VALUE);
     }
 
     /**
@@ -123,6 +126,7 @@ public class ImageManager
                 Bundle bundle = new Bundle();
                 bundle.putString("url", task.getUrl());
                 bundle.putString("save_file_path", getImageStorePath());
+                bundle.putLong("expire", task.getExpire());
                 msg.setData(bundle);
                 t.getHandler().sendMessage(msg);
                 runningTasksMap.put(task.getUrl(), task);
@@ -145,7 +149,7 @@ public class ImageManager
         sb.append("/").append(now.getMonth());
         sb.append("/").append(now.getDay());
         sb.append("/").append(now.getHours());
-        sb.append("/").append(now.getMinutes());
+        //sb.append("/").append(now.getMinutes());
         sb.append("/image_").append(System.currentTimeMillis());     // image name with ext
         return sb.toString();
     }

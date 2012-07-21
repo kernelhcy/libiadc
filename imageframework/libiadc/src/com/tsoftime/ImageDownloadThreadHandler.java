@@ -123,7 +123,7 @@ class ImageDownloadThreadHandler extends Handler
         }
 
         // save to cache
-        if(imageCacheManager.saveToCache(urlStr, filePath) < 0) {
+        if(imageCacheManager.saveToCache(urlStr, filePath, params.getLong("expire", Long.MAX_VALUE)) < 0) {
             sendError(-1, "Save to cache error.");
             return;
         }

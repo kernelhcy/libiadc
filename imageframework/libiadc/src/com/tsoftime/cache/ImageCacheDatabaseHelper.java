@@ -19,6 +19,7 @@ import android.database.sqlite.SQLiteOpenHelper;
  *  url : the image url.
  *  path : the file path which the image is stored to.
  *  user_count : the times of using the image. Used to recorder the hot degree of the image.
+ *  expire : the expire time of this image cache.
  *  created_at : the time when the image was downloaded.
  *
  * User: huangcongyu2006
@@ -28,7 +29,7 @@ public class ImageCacheDatabaseHelper extends SQLiteOpenHelper
 {
     public ImageCacheDatabaseHelper(Context context)
     {
-        super(context, "image_cache_db", null, 1);
+        super(context, "image_cache_db", null, 2);
     }
 
     @Override
@@ -40,7 +41,8 @@ public class ImageCacheDatabaseHelper extends SQLiteOpenHelper
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1)
     {
-
+        sqLiteDatabase.execSQL("drop table image_cache_maps;");
+        sqLiteDatabase.execSQL(createTablesSqls);
     }
 
     private final String createTablesSqls = "CREATE TABLE image_cache_maps " +
@@ -48,5 +50,6 @@ public class ImageCacheDatabaseHelper extends SQLiteOpenHelper
                                 "url TEXT, " +
                                 "path TEXT, " +
                                 "use_count INTEGER, " +
+                                "expire INTEGER, " +
                                 "created_at TIMESTAMP);";
 }

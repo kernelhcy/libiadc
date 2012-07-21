@@ -21,7 +21,7 @@ public class DemoActivity extends Activity
 
         // 初始化ImageManager。
         ImageManager.init(getApplicationContext());
-        ImageManager.instance().setDownloadThreadNumber(2);
+        //ImageManager.instance().setDownloadThreadNumber(2);
 
         listView = (ListView) findViewById(R.id.listview);
         adaper = new ImageListViewAdaper(getApplicationContext(), listView);

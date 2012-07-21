@@ -42,17 +42,19 @@ class ImageTask
         public abstract String toString();
     }
 
-    public ImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack, TaskPriority priority)
+    public ImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
+                    , TaskPriority priority, long expire)
     {
         this.url = url;
         this.params = params;
         this.callBack = callBack;
         this.priority = priority;
+        this.expire = expire;
     }
 
     public ImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack)
     {
-        this(url, params, callBack, TaskPriority.DEFAULT_PRIORITY);
+        this(url, params, callBack, TaskPriority.DEFAULT_PRIORITY, Long.MAX_VALUE);
     }
 
     /**
@@ -136,9 +138,20 @@ class ImageTask
         this.priority = priority;
     }
 
+    public long getExpire()
+    {
+        return expire;
+    }
+
+    public void setExpire(long expire)
+    {
+        this.expire = expire;
+    }
+
     private ImageTaskCallBack callBack;
     private String url;
     private HashMap<String, Object> params;
     private long total, hasRead;
     private TaskPriority priority;
+    private long expire;
 }
