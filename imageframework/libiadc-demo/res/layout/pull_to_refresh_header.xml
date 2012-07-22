@@ -72,7 +72,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:gravity="center"
-            android:textColor="#000000"
+            android:textColor="#65000000"
            
             />
         <TextView
@@ -85,7 +85,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:gravity="center"
-            android:textColor="#000000"
+            android:textColor="#65000000"
            />
 
     </RelativeLayout>

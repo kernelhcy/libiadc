@@ -28,7 +28,7 @@ public class PullToRefreshListView extends ListView implements
     OnScrollListener, GestureDetector.OnGestureListener
 {
 
-    private final int MAXHEIGHT = 40;
+    private final int MAXHEIGHT = 10;
     private static final int TAP_TO_REFRESH = 1;
     private static final int PULL_TO_REFRESH = 2;
     private static final int RELEASE_TO_REFRESH = 3;
@@ -64,7 +64,6 @@ public class PullToRefreshListView extends ListView implements
     private int mRefreshOriginalTopPadding;
     private int mLastMotionY;
     private GestureDetector mDetector;
-//	private int mPadding;
 
     // whether the refresh image view is animating.
     private boolean isRefreshViewImageAnimationRunning = false;
@@ -236,63 +235,30 @@ public class PullToRefreshListView extends ListView implements
     }
 
     /**
-     * TODO:此方法重写
      *
      * @param ev
      */
     private void applyHeaderPadding(MotionEvent ev)
     {
-        final int historySize = ev.getHistorySize();
+        // getHistorySize has been available since API 1
+        int pointerCount = ev.getHistorySize();
 
-//        Log.d(TAG, String.format("[applyHeaderPadding]currState=%d, refreshState=%d"
-//                                    , mCurrentScrollState, mRefreshState));
-        // Workaround for getPointerCount() which is unavailable in 1.5
-        // (it's always 1 in 1.5)
-        int pointerCount = 1;
-        try {
-            Method method = MotionEvent.class.getMethod("getPointerCount");
-            pointerCount = (Integer) method.invoke(ev);
-        } catch (NoSuchMethodException e) {
-            pointerCount = 1;
-        } catch (IllegalArgumentException e) {
-            throw e;
-        } catch (IllegalAccessException e) {
-            System.err.println("unexpected " + e);
-        } catch (InvocationTargetException e) {
-            System.err.println("unexpected " + e);
-        }
-        if (mRefreshState == RELEASE_TO_REFRESH) {
-//			this.offsetTopAndBottom(-mPadding);
-
-            for (int h = 0; h < historySize; h++) {
-                for (int p = 0; p < pointerCount; p++) {
-                    if (isVerticalFadingEdgeEnabled()) {
-                        setVerticalScrollBarEnabled(false);
-                    }
-
-                    int historicalY = 0;
-                    try {
-                        // For Android > 2.0
-                        Method method = MotionEvent.class.getMethod("getHistoricalY", Integer.TYPE, Integer.TYPE);
-                        historicalY = ((Float) method.invoke(ev, p, h)).intValue();
-                    } catch (NoSuchMethodException e) {
-                        // For Android < 2.0
-                        historicalY = (int) (ev.getHistoricalY(h));
-                    } catch (IllegalArgumentException e) {
-                        throw e;
-                    } catch (IllegalAccessException e) {
-                        System.err.println("unexpected " + e);
-                    } catch (InvocationTargetException e) {
-                        System.err.println("unexpected " + e);
-                    }
-
-                    // Calculate the padding to apply, we divide by 1.7 to
-                    // simulate a more resistant effect during pull.
-                    int topPadding = (int) (((historicalY - mLastMotionY) - mRefreshViewHeight) / 2.8);
-                    mRefreshView.setPadding(mRefreshView.getPaddingLeft(),
-                                            topPadding, mRefreshView.getPaddingRight(),
-                                            mRefreshView.getPaddingBottom());
+        for (int p = 0; p < pointerCount; p++) {
+            if (mRefreshState == RELEASE_TO_REFRESH) {
+                if (isVerticalFadingEdgeEnabled()) {
+                    setVerticalScrollBarEnabled(false);
                 }
+
+                int historicalY = (int) ev.getHistoricalY(p);
+
+                // Calculate the padding to apply, we divide by 1.7 to
+                // simulate a more resistant effect during pull.
+                int topPadding = (int) (((historicalY - mLastMotionY) - mRefreshViewHeight) / 2.5);
+
+                mRefreshView.setPadding(mRefreshView.getPaddingLeft(),
+                                        topPadding,
+                                        mRefreshView.getPaddingRight(),
+                                        mRefreshView.getPaddingBottom());
             }
         }
     }
@@ -342,7 +308,7 @@ public class PullToRefreshListView extends ListView implements
                                            , ViewGroup.LayoutParams.WRAP_CONTENT);
         }
 
-        int childWidthSpec = ViewGroup.getChildMeasureSpec(0, 0 + 0, p.width);
+        int childWidthSpec = ViewGroup.getChildMeasureSpec(0, 0, p.width);
         int lpHeight = p.height;
         int childHeightSpec;
         if (lpHeight > 0) {
@@ -425,7 +391,6 @@ public class PullToRefreshListView extends ListView implements
         if (mRefreshView.getBottom() > 0) {
             invalidateViews();
             if (getFirstVisiblePosition() <= 1) {
-                Log.d(TAG, String.format("SDK_INT %d", Build.VERSION.SDK_INT));
                 if (Build.VERSION.SDK_INT > 10) {
                     startAnimation(mListViewHideHeaderAnimation);
                 } else {
@@ -493,13 +458,7 @@ public class PullToRefreshListView extends ListView implements
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
     {
-
         int firstVisibleItem = this.getFirstVisiblePosition();
-
-        // When the refresh view is completely visible, change the text to say
-        // "Release to refresh..." and flip the arrow drawable.
-//        Log.d(TAG, String.format("[OnScroll]first=%d, currState=%d, refreshState=%d"
-//                                    , firstVisibleItem, mCurrentScrollState, mRefreshState));
 
         if (mCurrentScrollState == SCROLL_STATE_TOUCH_SCROLL
             && mRefreshState != REFRESHING) {
@@ -507,7 +466,6 @@ public class PullToRefreshListView extends ListView implements
                 mRefreshViewImage.setVisibility(View.VISIBLE);
                 if ((mRefreshView.getBottom() >= mRefreshViewHeight + MAXHEIGHT || mRefreshView.getTop() >= 0)
                     && mRefreshState != RELEASE_TO_REFRESH  && !isRefreshViewImageAnimationRunning) {
-                    //this.mPadding+=distanceY;//备用
                     mRefreshViewText.setText("松开刷新");
                     mRefreshViewImage.clearAnimation();
                     mRefreshViewImage.startAnimation(mFlipAnimation);
@@ -520,7 +478,6 @@ public class PullToRefreshListView extends ListView implements
                         mRefreshViewImage.startAnimation(mReverseFlipAnimation);
                     }
                     mRefreshState = PULL_TO_REFRESH;
-
                 }
             } else {
                 mRefreshViewImage.setVisibility(View.GONE);
