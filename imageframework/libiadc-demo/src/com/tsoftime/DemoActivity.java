@@ -1,6 +1,7 @@
 package com.tsoftime;
 
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -23,7 +24,7 @@ public class DemoActivity extends Activity
         ImageManager.init(getApplicationContext());
         //ImageManager.instance().setDownloadThreadNumber(2);
 
-        listView = (ListView) findViewById(R.id.listview);
+        listView = (PullToRefreshListView) findViewById(R.id.listview);
         adaper = new ImageListViewAdaper(getApplicationContext(), listView);
 
         //http://vm-192-168-18-243.shengyun.grandcloud.cn/mig31/
@@ -64,37 +65,40 @@ public class DemoActivity extends Activity
                 this.visibleItemCount = visibleItemCount;
             }
         });
-    }
 
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event)
-    {
-        Log.d("DemoActivity", String.format("keycode %d", keyCode));
-        int position = listView.getFirstVisiblePosition();
-        int count = listView.getChildCount();
-        switch (keyCode)
+        listView.setOnRefreshListener(new PullToRefreshListView.OnRefreshListener()
         {
-            case 21:    //left
-                position -= count;
-                scrollToPosition(position);
-                return true;
-            case 22:    //right
-                position += count;
-                scrollToPosition(position);
-                return true;
-        }
-        return super.onKeyDown(keyCode, event);
+            @Override
+            public void onRefresh()
+            {
+                new LoginTask().execute();
+            }
+        });
     }
 
-    private void scrollToPosition(int position)
+    private class LoginTask extends AsyncTask<Void, Void, Void>
     {
-        if (position < 0) position = 0;
-        if (position > listView.getCount()) position = listView.getCount();
-        Log.d("DemoActivity", String.format("Scroll to %d", position));
-        listView.smoothScrollToPosition(position);
-        listView.setSelection(position);
+
+        @Override
+        protected Void doInBackground(Void... voids)
+        {
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        public void onPostExecute(Void params)
+        {
+            //listView.setSelection(1);
+            //listView.smoothScrollToPosition(1);
+            listView.onRefreshComplete();
+        }
     }
 
-    private ListView listView;
+    private PullToRefreshListView listView;
     private ImageListViewAdaper adaper;
 }

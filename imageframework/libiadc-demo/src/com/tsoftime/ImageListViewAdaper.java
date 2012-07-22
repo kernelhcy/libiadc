@@ -82,14 +82,14 @@ public class ImageListViewAdaper extends BaseAdapter
         holder.urlTv.setText(urls.get(i));
 
         // 调用getImage获取图片
-        ImageManager imageManager = ImageManager.instance();
-        if (hasDownloaded[i]) {
-            imageManager.dispatchImageTask(urls.get(i), null, callBacks.get(i)
-                                            , ImageTask.TaskPriority.HIGH_PRIORITY, 60);
-        } else {
-            imageManager.dispatchImageTask(urls.get(i), null, callBacks.get(i)
-                                            , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60);
-        }
+//        ImageManager imageManager = ImageManager.instance();
+//        if (hasDownloaded[i]) {
+//            imageManager.dispatchImageTask(urls.get(i), null, callBacks.get(i)
+//                                            , ImageTask.TaskPriority.HIGH_PRIORITY, 60);
+//        } else {
+//            imageManager.dispatchImageTask(urls.get(i), null, callBacks.get(i)
+//                                            , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60);
+//        }
         return view;
     }
 
@@ -99,14 +99,14 @@ public class ImageListViewAdaper extends BaseAdapter
      */
     public void downloadImage(int index)
     {
-        ImageManager imageManager = ImageManager.instance();
-        if (hasDownloaded[index]) {
-            imageManager.dispatchImageTask(urls.get(index), null, callBacks.get(index)
-                                            , ImageTask.TaskPriority.HIGH_PRIORITY, 60);
-        } else {
-            imageManager.dispatchImageTask(urls.get(index), null, callBacks.get(index)
-                                            , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60);
-        }
+//        ImageManager imageManager = ImageManager.instance();
+//        if (hasDownloaded[index]) {
+//            imageManager.dispatchImageTask(urls.get(index), null, callBacks.get(index)
+//                                            , ImageTask.TaskPriority.HIGH_PRIORITY, 60);
+//        } else {
+//            imageManager.dispatchImageTask(urls.get(index), null, callBacks.get(index)
+//                                            , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60);
+//        }
     }
 
     private ArrayList<String> urls;
