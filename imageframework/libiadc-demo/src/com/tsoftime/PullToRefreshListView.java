@@ -58,7 +58,6 @@ public class PullToRefreshListView extends ListView implements
     private RotateAnimation mReverseFlipAnimation;
     private Animation mHeaderResetAnimation;
     private RotateAnimation mProgressBarAnimation;
-    private Animation mListViewHideHeaderAnimation;
 
     private int mRefreshViewHeight;
     private int mRefreshOriginalTopPadding;
@@ -121,7 +120,6 @@ public class PullToRefreshListView extends ListView implements
         mProgressBarAnimation.setFillAfter(true);
 
         mHeaderResetAnimation = new HeaderPaddingAnimation();
-        mListViewHideHeaderAnimation = new ListViewHideHeadAnimation();
 
         mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
@@ -216,11 +214,7 @@ public class PullToRefreshListView extends ListView implements
                                         || mRefreshView.getTop() <= 0) {
                         // Abort refresh and scroll down below the refresh view
                         resetHeader();
-                        if (Build.VERSION.SDK_INT > 10) {
-                            startAnimation(mListViewHideHeaderAnimation);
-                        } else {
-                            setSelection(1);
-                        }
+                        setSelection(1);
                     }
                 }
                 break;
@@ -391,11 +385,7 @@ public class PullToRefreshListView extends ListView implements
         if (mRefreshView.getBottom() > 0) {
             invalidateViews();
             if (getFirstVisiblePosition() <= 1) {
-                if (Build.VERSION.SDK_INT > 10) {
-                    startAnimation(mListViewHideHeaderAnimation);
-                } else {
-                    setSelection(1);
-                }
+                setSelection(1);
             }
         }
     }
@@ -548,32 +538,5 @@ public class PullToRefreshListView extends ListView implements
         }
 
         private int nowTopPadding;
-    }
-
-    /**
-     * List view hides head animation
-     */
-    private class ListViewHideHeadAnimation extends Animation
-    {
-        @Override
-        protected void applyTransformation(float interpolatedTime, Transformation t)
-        {
-            scrollTo(0, (int)(interpolatedTime  * firstItemTop));
-            if (interpolatedTime > 0.9) {
-                smoothScrollToPosition(1);
-            }
-        }
-
-        @Override
-        public void initialize(int width, int height, int parentWidth, int parentHeight)
-        {
-            super.initialize(width, height, parentWidth, parentHeight);
-            setDuration(150);
-            setInterpolator(new LinearInterpolator());
-            View firstItem = getChildAt(1);
-            firstItemTop = firstItem.getTop();
-        }
-
-        private int firstItemTop;
     }
 }
