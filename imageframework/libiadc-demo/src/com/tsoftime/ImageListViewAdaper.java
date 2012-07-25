@@ -10,6 +10,7 @@ import android.widget.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 
 /**
  * List View Adapter
@@ -25,7 +26,8 @@ public class ImageListViewAdaper extends BaseAdapter
         callBacks = new ArrayList<ImageTaskCallBack>();
         datas = new ArrayList<DownloadProgress>();
         inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        hasDownloaded = new boolean[0];
+        date = new int[300];
+        date[0] = 1;
     }
 
     public void addURL(String url)
@@ -33,9 +35,20 @@ public class ImageListViewAdaper extends BaseAdapter
         urls.add(url);
         datas.add(new DownloadProgress());
         callBacks.add(new MyCallBack(callBacks.size()));
-        boolean[] old = hasDownloaded;
-        hasDownloaded = new boolean[urls.size()];
-        System.arraycopy(old, 0, hasDownloaded, 0, old.length);
+        if (urls.size() > 1) {
+            Random r = new Random();
+            float  f = r.nextFloat();
+            if (f < 0.2) {
+                date[urls.size() - 1] = date[urls.size() - 2] + 1;
+            } else {
+                date[urls.size() - 1] = date[urls.size() - 2];
+            }
+        }
+    }
+
+    public int getDate(int index)
+    {
+        return date[index];
     }
 
     @Override
@@ -67,6 +80,7 @@ public class ImageListViewAdaper extends BaseAdapter
             holder.pb = (ProgressBar) view.findViewById(R.id.listview_item_progressbar);
             holder.tv = (TextView) view.findViewById(R.id.listview_item_progressbar_label);
             holder.urlTv = (TextView) view.findViewById(R.id.listview_item_url_label);
+            holder.dateLabel = (TextView) view.findViewById(R.id.listview_item_date_label);
             view.setTag(holder);
         } else {
             holder = (ViewHolder) view.getTag();
@@ -80,16 +94,20 @@ public class ImageListViewAdaper extends BaseAdapter
         holder.tv.setText(String.format("%d%%        %d/%d", (int)((float)data.hasRead * 100 / (float)data.total)
                                     , data.hasRead, data.total));
         holder.urlTv.setText(urls.get(i));
-
+        holder.dateLabel.setVisibility(View.VISIBLE);
+        if (i > 0 && date[i] != date[i - 1]){
+            holder.dateLabel.setText(String.format("第%d天", getDate(i)));
+        } else {
+            if (i == 0) {
+                holder.dateLabel.setText(String.format("第%d天", getDate(i)));
+            } else {
+                holder.dateLabel.setVisibility(View.GONE);
+            }
+        }
         // 调用getImage获取图片
-//        ImageManager imageManager = ImageManager.instance();
-//        if (hasDownloaded[i]) {
-//            imageManager.dispatchImageTask(urls.get(i), null, callBacks.get(i)
-//                                            , ImageTask.TaskPriority.HIGH_PRIORITY, 60);
-//        } else {
-//            imageManager.dispatchImageTask(urls.get(i), null, callBacks.get(i)
-//                                            , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60);
-//        }
+        ImageManager imageManager = ImageManager.instance();
+        imageManager.dispatchImageTask(urls.get(i), null, callBacks.get(i)
+                                            , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60);
         return view;
     }
 
@@ -99,18 +117,13 @@ public class ImageListViewAdaper extends BaseAdapter
      */
     public void downloadImage(int index)
     {
-//        ImageManager imageManager = ImageManager.instance();
-//        if (hasDownloaded[index]) {
-//            imageManager.dispatchImageTask(urls.get(index), null, callBacks.get(index)
-//                                            , ImageTask.TaskPriority.HIGH_PRIORITY, 60);
-//        } else {
-//            imageManager.dispatchImageTask(urls.get(index), null, callBacks.get(index)
-//                                            , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60);
-//        }
+        if (index < 0) return;
+        ImageManager imageManager = ImageManager.instance();
+        imageManager.dispatchImageTask(urls.get(index), null, callBacks.get(index)
+                                            , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60);
     }
 
     private ArrayList<String> urls;
-    private boolean[] hasDownloaded;
 
     /**
      * 获取图片的回调函数。
@@ -134,10 +147,6 @@ public class ImageListViewAdaper extends BaseAdapter
             // 获取对应的list view item。
             int wantedPosition;
             wantedPosition = index - (listView.getFirstVisiblePosition() - listView.getHeaderViewsCount());
-            if (wantedPosition < 0 || wantedPosition >= listView.getChildCount() - listView.getHeaderViewsCount()) {
-                //Log.w("ImageListViewAdapter", "wantedPosition < 0 || wantedPosition > listView.getChildCount()");
-                return;
-            }
             View view = listView.getChildAt(wantedPosition);
 
             if (view!= null) {
@@ -154,10 +163,6 @@ public class ImageListViewAdaper extends BaseAdapter
         {
             int wantedPosition;
             wantedPosition = index - (listView.getFirstVisiblePosition() - listView.getHeaderViewsCount());
-            if (wantedPosition < 0 || wantedPosition >= listView.getChildCount() - listView.getHeaderViewsCount()) {
-                Log.w("ImageListViewAdapter", "wantedPosition < 0 || wantedPosition > listView.getChildCount()");
-                return;
-            }
             View view = listView.getChildAt(wantedPosition);
             if (view!= null) {
                 // 下载完成。显示图片。
@@ -167,7 +172,6 @@ public class ImageListViewAdaper extends BaseAdapter
                  * 这里不对bmp参数做任何保存！让libiadc进行图片缓存处理。
                  */
             }
-            hasDownloaded[index] = true;
         }
         private int index;
     }
@@ -189,10 +193,11 @@ public class ImageListViewAdaper extends BaseAdapter
     {
         ProgressBar pb;
         ImageView iv;
-        TextView tv, urlTv;
+        TextView tv, urlTv, dateLabel;
     }
 
     private ArrayList<DownloadProgress> datas;
     private ListView listView;
     private LayoutInflater inflater;
+    private int[] date;
 }

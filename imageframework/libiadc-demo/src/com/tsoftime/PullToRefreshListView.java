@@ -64,6 +64,8 @@ public class PullToRefreshListView extends ListView implements
     private int mLastMotionY;
     private GestureDetector mDetector;
 
+    private GestureDetector.OnGestureListener mOnGestureListener;
+
     // whether the refresh image view is animating.
     private boolean isRefreshViewImageAnimationRunning = false;
     private RefreshViewImageAnimationListener refreshViewImageAnimationListener = null;
@@ -427,21 +429,20 @@ public class PullToRefreshListView extends ListView implements
     @Override
     public boolean onDown(MotionEvent e)
     {
-        // TODO Auto-generated method stub
+        mOnGestureListener.onDown(e);
         return false;
     }
 
     @Override
     public void onShowPress(MotionEvent e)
     {
-        // TODO Auto-generated method stub
-
+        mOnGestureListener.onShowPress(e);
     }
 
     @Override
     public boolean onSingleTapUp(MotionEvent e)
     {
-        // TODO Auto-generated method stub
+        mOnGestureListener.onSingleTapUp(e);
         return false;
     }
 
@@ -475,20 +476,20 @@ public class PullToRefreshListView extends ListView implements
             }
         }
 
+        mOnGestureListener.onScroll(e1, e2, distanceX, distanceY);
         return false;
     }
 
     @Override
     public void onLongPress(MotionEvent e)
     {
-        // TODO Auto-generated method stub
-
+        mOnGestureListener.onLongPress(e);
     }
 
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY)
     {
-        // TODO Auto-generated method stub
+        mOnGestureListener.onFling(e1, e2, velocityX, velocityY);
         return false;
     }
 
@@ -538,5 +539,15 @@ public class PullToRefreshListView extends ListView implements
         }
 
         private int nowTopPadding;
+    }
+
+    public GestureDetector.OnGestureListener getmOnGestureListener()
+    {
+        return mOnGestureListener;
+    }
+
+    public void setmOnGestureListener(GestureDetector.OnGestureListener mOnGestureListener)
+    {
+        this.mOnGestureListener = mOnGestureListener;
     }
 }

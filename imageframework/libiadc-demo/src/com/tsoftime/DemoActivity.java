@@ -4,9 +4,15 @@ import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.TranslateAnimation;
 import android.widget.AbsListView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 /**
  * 示例Activity
@@ -26,6 +32,7 @@ public class DemoActivity extends Activity
 
         listView = (PullToRefreshListView) findViewById(R.id.listview);
         adaper = new ImageListViewAdaper(getApplicationContext(), listView);
+        dateTextView = (TextView) findViewById(R.id.up_date_label);
 
         //http://vm-192-168-18-243.shengyun.grandcloud.cn/mig31/
         for (int i = 1; i < 258; ++i) {
@@ -38,18 +45,18 @@ public class DemoActivity extends Activity
         listView.setOnScrollListener(new AbsListView.OnScrollListener()
         {
             private int firstVisibleItem, visibleItemCount;
+
             @Override
             public void onScrollStateChanged(AbsListView absListView, int scrollState)
             {
                 ImageManager imageManager = ImageManager.instance();
-                switch (scrollState)
-                {
+                switch (scrollState) {
                     case AbsListView.OnScrollListener.SCROLL_STATE_IDLE:
-                        Log.d(DemoActivity.class.getSimpleName(), "Scroll view idle.");
+                        //Log.d(DemoActivity.class.getSimpleName(), "Scroll view idle.");
                         imageManager.removeAllTasks();
-                        for (int i = 0, j = firstVisibleItem; i < visibleItemCount; ++i, ++j) {
-                            adaper.downloadImage(j);
+                        for (int i = 0, j = firstVisibleItem - 1; i < visibleItemCount; ++i, ++j) {
                             Log.d(DemoActivity.class.getSimpleName(), String.format("downloading ... %d.jpg", j));
+                            adaper.downloadImage(j);
                         }
                         break;
                     default:
@@ -59,13 +66,20 @@ public class DemoActivity extends Activity
 
             @Override
             public void onScroll(AbsListView absListView, int firstVisibleItem
-                                , int visibleItemCount, int totalItemCount)
+                , int visibleItemCount, int totalItemCount)
             {
                 this.firstVisibleItem = firstVisibleItem;
                 this.visibleItemCount = visibleItemCount;
+                int position = firstVisibleItem;
+                if (position <= 0) {
+                    dateTextView.setVisibility(View.GONE);
+                } else {
+                    dateTextView.setVisibility(View.VISIBLE);
+                    dateTextView.setText(String.format("第%d天", adaper.getDate(position - 1)));
+                }
             }
         });
-
+        listView.setmOnGestureListener(new MyGestureListener());
         listView.setOnRefreshListener(new PullToRefreshListView.OnRefreshListener()
         {
             @Override
@@ -74,6 +88,17 @@ public class DemoActivity extends Activity
                 new LoginTask().execute();
             }
         });
+    }
+
+
+    private class MyGestureListener extends GestureDetector.SimpleOnGestureListener
+    {
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY)
+        {
+
+            return false;
+        }
     }
 
     private class LoginTask extends AsyncTask<Void, Void, Void>
@@ -99,6 +124,9 @@ public class DemoActivity extends Activity
         }
     }
 
+
     private PullToRefreshListView listView;
     private ImageListViewAdaper adaper;
+    private TextView dateTextView;
+    private boolean isDateChanging;
 }
