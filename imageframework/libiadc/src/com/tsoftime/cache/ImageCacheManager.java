@@ -6,8 +6,10 @@ import android.graphics.BitmapFactory;
 import android.util.Log;
 
 import java.io.File;
+import java.lang.ref.SoftReference;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 
 /**
  * The image cache manager.
@@ -19,6 +21,7 @@ public class ImageCacheManager
     public ImageCacheManager(Context ctx)
     {
         context = ctx;
+        cache = new HashMap<String, SoftReference<Bitmap>>();
     }
 
     /**
@@ -28,6 +31,17 @@ public class ImageCacheManager
      */
     public Bitmap getImage(String url)
     {
+        // Get the image from the bitmap cache
+        // If the bitmap has recycled by the gc. Get it from the file cache.
+        SoftReference<Bitmap> ref = cache.get(url);
+        if (ref != null) {
+            if (ref.get() == null) {
+                cache.remove(url);
+            } else {
+                return ref.get();
+            }
+        }
+
         ImageURLPathPair pair = ImageURLPathPair.select(url, context);
         if (pair == null) return null;
 
@@ -40,6 +54,7 @@ public class ImageCacheManager
             // remove the old cach image.
             File oldFile = new File(pair.getPath());
             if (oldFile.exists()) oldFile.delete();
+            cache.remove(url);
             return null;
         }
 
@@ -61,9 +76,10 @@ public class ImageCacheManager
      * @param url       the url of the image
      * @param filePath  the path of the image
      * @param expire    the expire time
+     * @param bmp       the bitmap
      * @return          > 0 for success, and the return is the id.  < 0 for error.
      */
-    public long saveToCache(String url, String filePath, long expire)
+    public long saveToCache(String url, String filePath, Bitmap bmp, long expire)
     {
         ImageURLPathPair pair = ImageURLPathPair.select(url, context);
         if (pair == null) {
@@ -72,9 +88,17 @@ public class ImageCacheManager
         pair.setPath(filePath);
         pair.setUrl(url);
         pair.setExpire(expire);
-        return pair.save(context);
+
+        long id = pair.save(context);
+        cache.put(url, new SoftReference<Bitmap>(bmp)); // cache the bitmap
+        return  id;
     }
 
     private Context context;
     private static final String TAG = ImageCacheManager.class.getSimpleName();
+
+    /*
+     * Save the soft references of the bitmaps.
+     */
+    private HashMap<String, SoftReference<Bitmap>> cache;
 }
