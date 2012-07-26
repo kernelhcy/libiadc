@@ -115,7 +115,7 @@ public class PullToRefreshListView extends ListView implements
                                                     RotateAnimation.RELATIVE_TO_SELF, 0.5f,
                                                     RotateAnimation.RELATIVE_TO_SELF, 0.5f);
         mProgressBarAnimation.setInterpolator(new LinearInterpolator());
-        mProgressBarAnimation.setDuration(1100);
+        mProgressBarAnimation.setDuration(1200);
         mProgressBarAnimation.setRepeatCount(Integer.MAX_VALUE);
         mProgressBarAnimation.setFillAfter(true);
 
@@ -519,7 +519,7 @@ public class PullToRefreshListView extends ListView implements
         {
             super.initialize(width, height, parentWidth, parentHeight);
             setDuration(200);
-            setInterpolator(new LinearInterpolator());
+            setInterpolator(new DecelerateInterpolator());
             nowTopPadding = mRefreshView.getPaddingTop();
         }
 

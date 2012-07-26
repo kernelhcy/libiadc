@@ -96,7 +96,7 @@ public class DemoActivity extends Activity
         protected Void doInBackground(Void... voids)
         {
             try {
-                Thread.sleep(2000);
+                Thread.sleep(5000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
