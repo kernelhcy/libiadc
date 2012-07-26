@@ -237,6 +237,8 @@ public class PullToRefreshListView extends ListView implements
      */
     private void applyHeaderPadding(MotionEvent ev)
     {
+        if (mRefreshState == REFRESHING) return;
+        
         int historicalY = (int) ev.getY();
         // Calculate the padding to apply, we divide by 1.7 to
         // simulate a more resistant effect during pull.
