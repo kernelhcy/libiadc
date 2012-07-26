@@ -64,8 +64,6 @@ public class PullToRefreshListView extends ListView implements
     private int mLastMotionY;
     private GestureDetector mDetector;
 
-    private GestureDetector.OnGestureListener mOnGestureListener;
-
     // whether the refresh image view is animating.
     private boolean isRefreshViewImageAnimationRunning = false;
     private RefreshViewImageAnimationListener refreshViewImageAnimationListener = null;
@@ -142,6 +140,8 @@ public class PullToRefreshListView extends ListView implements
         addHeaderView(mRefreshView);
         measureView(mRefreshView);
         mRefreshViewHeight = mRefreshView.getMeasuredHeight();
+
+        mRefreshViewText.setText("下拉刷新");
     }
 
     @Override
@@ -217,6 +217,7 @@ public class PullToRefreshListView extends ListView implements
                         // Abort refresh and scroll down below the refresh view
                         resetHeader();
                         setSelection(1);
+                        Log.d(TAG, String.format("reset to selection 1"));
                     }
                 }
                 break;
@@ -236,27 +237,16 @@ public class PullToRefreshListView extends ListView implements
      */
     private void applyHeaderPadding(MotionEvent ev)
     {
-        // getHistorySize has been available since API 1
-        int pointerCount = ev.getHistorySize();
+        int historicalY = (int) ev.getY();
+        // Calculate the padding to apply, we divide by 1.7 to
+        // simulate a more resistant effect during pull.
+        int topPadding = (int) (((historicalY - mLastMotionY) - mRefreshViewHeight) / 2.5);
 
-        for (int p = 0; p < pointerCount; p++) {
-            if (mRefreshState == RELEASE_TO_REFRESH) {
-                if (isVerticalFadingEdgeEnabled()) {
-                    setVerticalScrollBarEnabled(false);
-                }
+        mRefreshView.setPadding(mRefreshView.getPaddingLeft(),
+            topPadding,
+            mRefreshView.getPaddingRight(),
+            mRefreshView.getPaddingBottom());
 
-                int historicalY = (int) ev.getHistoricalY(p);
-
-                // Calculate the padding to apply, we divide by 1.7 to
-                // simulate a more resistant effect during pull.
-                int topPadding = (int) (((historicalY - mLastMotionY) - mRefreshViewHeight) / 2.5);
-
-                mRefreshView.setPadding(mRefreshView.getPaddingLeft(),
-                                        topPadding,
-                                        mRefreshView.getPaddingRight(),
-                                        mRefreshView.getPaddingBottom());
-            }
-        }
     }
 
     /**
@@ -279,7 +269,7 @@ public class PullToRefreshListView extends ListView implements
         Log.d(TAG, String.format("[resetHeader]currState=%d, refreshState=%d", mCurrentScrollState, mRefreshState));
         if (mRefreshState != TAP_TO_REFRESH) {
             mRefreshState = TAP_TO_REFRESH;
-            resetHeaderPadding();
+            //resetHeaderPadding();
 
             // Set refresh view text to the pull label
             // mRefreshViewText.setText(R.string.pull_to_refresh_tap_label);//点击刷新是否有用
@@ -429,20 +419,17 @@ public class PullToRefreshListView extends ListView implements
     @Override
     public boolean onDown(MotionEvent e)
     {
-        mOnGestureListener.onDown(e);
         return false;
     }
 
     @Override
     public void onShowPress(MotionEvent e)
     {
-        mOnGestureListener.onShowPress(e);
     }
 
     @Override
     public boolean onSingleTapUp(MotionEvent e)
     {
-        mOnGestureListener.onSingleTapUp(e);
         return false;
     }
 
@@ -472,24 +459,22 @@ public class PullToRefreshListView extends ListView implements
                 }
             } else {
                 mRefreshViewImage.setVisibility(View.GONE);
+                Log.d(TAG, String.format("scroll state %d refresh state %d", mCurrentScrollState, mRefreshState));
                 resetHeader();
             }
         }
 
-        mOnGestureListener.onScroll(e1, e2, distanceX, distanceY);
         return false;
     }
 
     @Override
     public void onLongPress(MotionEvent e)
     {
-        mOnGestureListener.onLongPress(e);
     }
 
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY)
     {
-        mOnGestureListener.onFling(e1, e2, velocityX, velocityY);
         return false;
     }
 
@@ -534,20 +519,10 @@ public class PullToRefreshListView extends ListView implements
         {
             super.initialize(width, height, parentWidth, parentHeight);
             setDuration(200);
-            setInterpolator(new DecelerateInterpolator());
+            setInterpolator(new LinearInterpolator());
             nowTopPadding = mRefreshView.getPaddingTop();
         }
 
         private int nowTopPadding;
-    }
-
-    public GestureDetector.OnGestureListener getmOnGestureListener()
-    {
-        return mOnGestureListener;
-    }
-
-    public void setmOnGestureListener(GestureDetector.OnGestureListener mOnGestureListener)
-    {
-        this.mOnGestureListener = mOnGestureListener;
     }
 }

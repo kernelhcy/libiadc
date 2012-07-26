@@ -79,7 +79,6 @@ public class DemoActivity extends Activity
                 }
             }
         });
-        listView.setmOnGestureListener(new MyGestureListener());
         listView.setOnRefreshListener(new PullToRefreshListView.OnRefreshListener()
         {
             @Override
@@ -88,17 +87,6 @@ public class DemoActivity extends Activity
                 new LoginTask().execute();
             }
         });
-    }
-
-
-    private class MyGestureListener extends GestureDetector.SimpleOnGestureListener
-    {
-        @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY)
-        {
-
-            return false;
-        }
     }
 
     private class LoginTask extends AsyncTask<Void, Void, Void>
