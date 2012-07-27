@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Message;
 import android.util.Log;
+import com.tsoftime.cache.ImageCacheManager;
 
 import java.io.File;
 import java.util.Calendar;
@@ -39,7 +40,7 @@ public class ImageManager
     public static void init(Context context)
     {
         mInstance = new ImageManager(context);
-
+        ImageCacheManager.init(context);
     }
 
     /**
@@ -71,6 +72,17 @@ public class ImageManager
             callBack.onDownloadingDone(NO_SUCH_IMAGE, null, params);
             return;
         }
+
+        // try to get the image from the cache
+        ImageCacheManager cacheManager = ImageCacheManager.getInstance();
+        Bitmap bmp = cacheManager.getImageFromCache(url);
+        if (bmp != null) {
+            Log.d(TAG, String.format("Cached! %s", url));
+            callBack.onDownloadingDone(SUCCESS, bmp, params);
+            return;
+        }
+
+        // try to get the image from the filesystem cache or network
         Log.d(TAG, String.format("get image %s %s", url, priority.toString()));
         ImageTask task = new ImageTask(url, params, callBack, priority, expireTime);
         newTasksQueues.enqueue(task);
@@ -263,6 +275,13 @@ public class ImageManager
         ImageTask task = runningTasksMap.get(url);
         if (task == null) return;
         task.getCallBack().onDownloadingDone(status, bmp, task.getParams());
+
+        if (status == SUCCESS && bmp != null) {
+            // save the cache
+            Log.d(TAG, String.format("Cache bitmap, %s", url));
+            ImageCacheManager cacheManager = ImageCacheManager.getInstance();
+            cacheManager.saveToCache(url, bmp);
+        }
     }
 
     Context getContext()

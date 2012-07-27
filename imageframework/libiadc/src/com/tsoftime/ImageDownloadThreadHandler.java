@@ -53,7 +53,7 @@ class ImageDownloadThreadHandler extends Handler
         this.thread = thread;
         this.context = this.thread.getContext();
         this.imageManagerHandler = handler;
-        this.imageCacheManager = new ImageCacheManager(context);
+        this.imageCacheManager = ImageCacheManager.getInstance();
     }
 
     /**
@@ -106,7 +106,7 @@ class ImageDownloadThreadHandler extends Handler
         Log.d(TAG, String.format("%s downloads %s, store in %s", getLooper().getThread().getName(), urlStr, filePath));
 
         // find the image from the cache.
-        Bitmap bmp = imageCacheManager.getImage(urlStr);
+        Bitmap bmp = imageCacheManager.getImageFromFileSystemCache(urlStr);
         if (bmp != null) {
             sendDownloadingProgress(100, 100);
             sendDownloadDown(bmp, filePath);
@@ -123,7 +123,7 @@ class ImageDownloadThreadHandler extends Handler
         }
 
         // save to cache
-        if(imageCacheManager.saveToCache(urlStr, filePath, image, params.getLong("expire", Long.MAX_VALUE)) < 0) {
+        if(imageCacheManager.saveToFilesystemCache(urlStr, filePath, params.getLong("expire", Long.MAX_VALUE)) < 0) {
             sendError(-1, "Save to cache error.");
             return;
         }
