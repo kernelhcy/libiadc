@@ -21,10 +21,19 @@
     <ImageView android:layout_width="fill_parent"
                android:layout_height="250dp"
                android:scaleType="centerCrop"
+               android:src="@drawable/default_bg"
+               android:layout_below="@id/listview_item_date_label">
+
+    </ImageView>
+    <ImageView android:layout_width="fill_parent"
+               android:layout_height="250dp"
+               android:scaleType="centerCrop"
+               android:src="@drawable/default_bg"
                android:layout_below="@id/listview_item_date_label"
                android:id="@+id/listview_item_image">
 
     </ImageView>
+
     <ProgressBar android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="3dp"

@@ -1,6 +1,7 @@
 package com.tsoftime;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -11,8 +12,11 @@ import android.view.View;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.TranslateAnimation;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import java.util.ArrayList;
 
 /**
  * 示例Activity
@@ -34,17 +38,22 @@ public class DemoActivity extends Activity
         adaper = new ImageListViewAdaper(getApplicationContext(), listView);
         dateTextView = (TextView) findViewById(R.id.up_date_label);
 
+        final ArrayList<String> urls = new ArrayList<String>();
         //http://vm-192-168-18-243.shengyun.grandcloud.cn/mig31/
-        for (int i = 1; i < 258; ++i) {
-            String url = "http://vm-192-168-18-243.shengyun.grandcloud.cn/mig31/" + i + ".jpg";
+        String host = "http://vm-192-168-18-243.shengyun.grandcloud.cn/big/";
+        for (int i = 0; i < 10; ++i) {
+            String url =  host + (i + 1) + ".jpg";
             adaper.addURL(url);
+            urls.add(url);
         }
+        Log.d(DemoActivity.class.getSimpleName(), String.format("url count %d", urls.size()));
 
         listView.setAdapter(adaper);
         listView.setFastScrollEnabled(true);
         listView.setOnScrollListener(new AbsListView.OnScrollListener()
         {
-            private int firstVisibleItem, visibleItemCount;
+            private int firstVisibleItem;
+            private int visibleItemCount;
 
             @Override
             public void onScrollStateChanged(AbsListView absListView, int scrollState)
@@ -56,7 +65,7 @@ public class DemoActivity extends Activity
                         imageManager.removeAllTasks();
                         for (int i = 0, j = firstVisibleItem - 1; i < visibleItemCount; ++i, ++j) {
                             Log.d(DemoActivity.class.getSimpleName(), String.format("downloading ... %d.jpg", j));
-                            adaper.downloadImage(j);
+                            adaper.downloadImage(j - 1);
                         }
                         break;
                     default:
@@ -87,6 +96,19 @@ public class DemoActivity extends Activity
                 new LoginTask().execute();
             }
         });
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
+            {
+                Intent intent = new Intent(DemoActivity.this, ImageViewActivity.class);
+                intent.putExtra("urls", urls);
+                intent.putExtra("url", (String)adaper.getItem(i - 1));
+                startActivity(intent);
+                overridePendingTransition(R.anim.zoomout, R.anim.zoomin);
+            }
+        });
     }
 
     private class LoginTask extends AsyncTask<Void, Void, Void>
@@ -106,8 +128,6 @@ public class DemoActivity extends Activity
         @Override
         public void onPostExecute(Void params)
         {
-            //listView.setSelection(1);
-            //listView.smoothScrollToPosition(1);
             listView.onRefreshComplete();
         }
     }
@@ -116,5 +136,5 @@ public class DemoActivity extends Activity
     private PullToRefreshListView listView;
     private ImageListViewAdaper adaper;
     private TextView dateTextView;
-    private boolean isDateChanging;
+
 }

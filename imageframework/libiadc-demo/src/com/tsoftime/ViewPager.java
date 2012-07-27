@@ -8,7 +8,8 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
+import android.widget.Adapter;
+import android.widget.LinearLayout;
 import android.widget.Scroller;
 
 /**
@@ -24,8 +25,7 @@ public class ViewPager extends ViewGroup
     private Scroller mScroller;
     private VelocityTracker mVelocityTracker;
 
-    private int mCurScreen;
-    private int mDefaultScreen = 0;
+    private int mCurScreen = 0;
 
     private static final int TOUCH_STATE_REST = 0;
     private static final int TOUCH_STATE_SCROLLING = 1;
@@ -36,46 +36,50 @@ public class ViewPager extends ViewGroup
     private int mTouchSlop;
     private float mLastMotionX;
 
-    private BaseAdapter mAdapter;
-    private View mPreView, mCurrView, mNextView;    // only keep three views.
+    private int mChildGap = 20;     // the gap between two items
+    private boolean mNeedScrollToScreen;
+    private Adapter mAdapter;
 
     public ViewPager(Context context, AttributeSet attrs)
     {
         this(context, attrs, 0);
-        // TODO Auto-generated constructor stub
     }
 
     public ViewPager(Context context, AttributeSet attrs, int defStyle)
     {
         super(context, attrs, defStyle);
-        // TODO Auto-generated constructor stub
         mScroller = new Scroller(context);
-        mCurScreen = mDefaultScreen;
         mTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
     }
 
     @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b)
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom)
     {
-        // TODO Auto-generated method stub
+        Log.d(TAG, "onLayout");
         int childLeft = 0;
         final int childCount = getChildCount();
-
+        Log.d(TAG, String.format("child count %d", childCount));
         for (int i = 0; i < childCount; i++) {
             final View childView = getChildAt(i);
             if (childView.getVisibility() != View.GONE) {
                 final int childWidth = childView.getMeasuredWidth();
-                childView.layout(childLeft, 0,
-                    childLeft + childWidth, childView.getMeasuredHeight());
+                childView.layout(childLeft, 0, childLeft + childWidth, childView.getMeasuredHeight());
                 childLeft += childWidth;
+                childLeft += mChildGap;
             }
+        }
+        // scroll to the current screen
+        if (mNeedScrollToScreen) {
+            mNeedScrollToScreen = false;
+            scrollTo(mCurScreen * (getWidth() + mChildGap), 0);
+            mAdapter.getView(mCurScreen, getChildAt(mCurScreen), null);
         }
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
     {
-        Log.e(TAG, "onMeasure");
+        Log.d(TAG, "onMeasure");
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
         final int width = MeasureSpec.getSize(widthMeasureSpec);
@@ -84,6 +88,7 @@ public class ViewPager extends ViewGroup
             throw new IllegalStateException("ViewPager only canmCurScreen run at EXACTLY mode!");
         }
 
+        final int height = MeasureSpec.getSize(heightMeasureSpec);
         final int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         if (heightMode != MeasureSpec.EXACTLY) {
             throw new IllegalStateException("ViewPager only can run at EXACTLY mode!");
@@ -94,8 +99,8 @@ public class ViewPager extends ViewGroup
         for (int i = 0; i < count; i++) {
             getChildAt(i).measure(widthMeasureSpec, heightMeasureSpec);
         }
-        // Log.e(TAG, "moving to screen "+mCurScreen);
-        scrollTo(mCurScreen * width, 0);
+
+        setMeasuredDimension(width, height);
     }
 
     /**
@@ -104,7 +109,7 @@ public class ViewPager extends ViewGroup
      */
     public void snapToDestination()
     {
-        final int screenWidth = getWidth();
+        final int screenWidth = getWidth() + mChildGap;
         final int destScreen = (getScrollX() + screenWidth / 2) / screenWidth;
         snapToScreen(destScreen);
     }
@@ -114,20 +119,32 @@ public class ViewPager extends ViewGroup
         // get the valid layout page
         whichScreen = Math.max(0, Math.min(whichScreen, getChildCount() - 1));
         if (getScrollX() != (whichScreen * getWidth())) {
-
-            final int delta = whichScreen * getWidth() - getScrollX();
-            mScroller.startScroll(getScrollX(), 0,
-                delta, 0, Math.abs(delta) * 2);
+            final int delta = whichScreen * (getWidth() + mChildGap) - getScrollX();
+            mScroller.startScroll(getScrollX(), 0, delta, 0, Math.abs(delta));
             mCurScreen = whichScreen;
             invalidate();        // Redraw the layout
         }
+        Log.d(TAG, String.format("snap to screen %d", whichScreen));
+        if (whichScreen >= getChildCount() - 1 && whichScreen + 1 < mAdapter.getCount()) {
+            addView(mAdapter.getView(whichScreen + 1, null, null));
+        }
+        mAdapter.getView(whichScreen, getChildAt(whichScreen), null);
     }
 
     public void setToScreen(int whichScreen)
     {
         whichScreen = Math.max(0, Math.min(whichScreen, getChildCount() - 1));
         mCurScreen = whichScreen;
-        scrollTo(whichScreen * getWidth(), 0);
+        mNeedScrollToScreen = true;
+        if (mCurScreen >= getChildCount() - 1) {
+            removeAllViews();
+            for (int i = 0; i <= mCurScreen; ++i) {
+                addView(mAdapter.getView(i, null, null));
+            }
+            invalidate();
+            requestLayout();
+        }
+        mAdapter.getView(mCurScreen, getChildAt(mCurScreen), null);
     }
 
     public int getCurScreen()
@@ -160,35 +177,31 @@ public class ViewPager extends ViewGroup
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                Log.e(TAG, "event down!");
+                Log.d(TAG, "event down!");
                 if (!mScroller.isFinished()) {
                     mScroller.abortAnimation();
                 }
                 mLastMotionX = x;
                 break;
-
             case MotionEvent.ACTION_MOVE:
                 int deltaX = (int) (mLastMotionX - x);
                 mLastMotionX = x;
-
                 scrollBy(deltaX, 0);
                 break;
-
             case MotionEvent.ACTION_UP:
-                Log.e(TAG, "event : up");
+                Log.d(TAG, "event : up");
                 final VelocityTracker velocityTracker = mVelocityTracker;
                 velocityTracker.computeCurrentVelocity(1000);
                 int velocityX = (int) velocityTracker.getXVelocity();
-                Log.e(TAG, "velocityX:" + velocityX);
+                Log.d(TAG, "velocityX:" + velocityX);
 
                 if (velocityX > SNAP_VELOCITY && mCurScreen > 0) {
                     // Fling enough to move left
-                    Log.e(TAG, "snap left");
+                    Log.d(TAG, "snap left");
                     snapToScreen(mCurScreen - 1);
-                } else if (velocityX < -SNAP_VELOCITY
-                    && mCurScreen < getChildCount() - 1) {
+                } else if (velocityX < -SNAP_VELOCITY && mCurScreen < getChildCount() - 1) {
                     // Fling enough to move right
-                    Log.e(TAG, "snap right");
+                    Log.d(TAG, "snap right");
                     snapToScreen(mCurScreen + 1);
                 } else {
                     snapToDestination();
@@ -211,30 +224,24 @@ public class ViewPager extends ViewGroup
     public boolean onInterceptTouchEvent(MotionEvent ev)
     {
         // TODO Auto-generated method stub
-        Log.e(TAG, "onInterceptTouchEvent-slop:" + mTouchSlop);
+        Log.d(TAG, "onInterceptTouchEvent-slop:" + mTouchSlop);
 
         final int action = ev.getAction();
-        if ((action == MotionEvent.ACTION_MOVE) &&
-            (mTouchState != TOUCH_STATE_REST)) {
+        if ((action == MotionEvent.ACTION_MOVE) && (mTouchState != TOUCH_STATE_REST)) {
             return true;
         }
-
         final float x = ev.getX();
-
         switch (action) {
             case MotionEvent.ACTION_MOVE:
                 final int xDiff = (int) Math.abs(mLastMotionX - x);
                 if (xDiff > mTouchSlop) {
                     mTouchState = TOUCH_STATE_SCROLLING;
-
                 }
                 break;
-
             case MotionEvent.ACTION_DOWN:
                 mLastMotionX = x;
                 mTouchState = mScroller.isFinished() ? TOUCH_STATE_REST : TOUCH_STATE_SCROLLING;
                 break;
-
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
                 mTouchState = TOUCH_STATE_REST;
@@ -244,13 +251,22 @@ public class ViewPager extends ViewGroup
         return mTouchState != TOUCH_STATE_REST;
     }
 
-    public BaseAdapter getAdapter()
+    public Adapter getAdapter()
     {
         return mAdapter;
     }
 
-    public void setAdapter(BaseAdapter adapter)
+    /*
+     *
+     */
+    public void setAdapter(Adapter adapter)
     {
-        this.mAdapter = adapter;
+        mAdapter = adapter;
+        for(int i = 0; i < adapter.getCount() ; ++i) {
+            addView(adapter.getView(i, null, null));
+        }
+        adapter.getView(0, getChildAt(0), null);
+        invalidate();
+        requestLayout();
     }
 }

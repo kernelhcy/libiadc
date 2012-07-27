@@ -78,6 +78,7 @@ public class ImageManager
         Bitmap bmp = cacheManager.getImageFromCache(url);
         if (bmp != null) {
             Log.d(TAG, String.format("Cached! %s", url));
+            callBack.onGettingProgress(100, 100, params);
             callBack.onDownloadingDone(SUCCESS, bmp, params);
             return;
         }

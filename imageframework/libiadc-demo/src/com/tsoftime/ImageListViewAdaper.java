@@ -2,10 +2,10 @@ package com.tsoftime;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
 import android.widget.*;
 
 import java.util.ArrayList;
@@ -23,10 +23,12 @@ public class ImageListViewAdaper extends BaseAdapter
     {
         this.listView = listView;
         urls = new ArrayList<String>();
-        callBacks = new ArrayList<ImageTaskCallBack>();
+        callBack = new MyCallBack();
         datas = new ArrayList<DownloadProgress>();
         inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         date = new int[300];
+        firstTime = new boolean[300];
+        for(int i = 0; i < firstTime.length; ++i) firstTime[i] = true;
         date[0] = 1;
     }
 
@@ -34,7 +36,6 @@ public class ImageListViewAdaper extends BaseAdapter
     {
         urls.add(url);
         datas.add(new DownloadProgress());
-        callBacks.add(new MyCallBack(callBacks.size()));
         if (urls.size() > 1) {
             Random r = new Random();
             float  f = r.nextFloat();
@@ -85,7 +86,6 @@ public class ImageListViewAdaper extends BaseAdapter
         } else {
             holder = (ViewHolder) view.getTag();
         }
-        holder.iv.setImageBitmap(null);
 
         DownloadProgress data = datas.get(i);
         holder.pb.setMax(data.total);
@@ -105,9 +105,13 @@ public class ImageListViewAdaper extends BaseAdapter
             }
         }
         // 调用getImage获取图片
+        holder.iv.setImageResource(R.drawable.default_bg);
         ImageManager imageManager = ImageManager.instance();
-        imageManager.dispatchImageTask(urls.get(i), null, callBacks.get(i)
-                                            , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60);
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("index", i);
+        imageManager.dispatchImageTask(urls.get(i), params, callBack
+                                    , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60 * 60);
+
         return view;
     }
 
@@ -119,8 +123,10 @@ public class ImageListViewAdaper extends BaseAdapter
     {
         if (index < 0) return;
         ImageManager imageManager = ImageManager.instance();
-        imageManager.dispatchImageTask(urls.get(index), null, callBacks.get(index)
-                                            , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60);
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("index", index);
+        imageManager.dispatchImageTask(urls.get(index), params, callBack
+                                            , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60 * 60);
     }
 
     private ArrayList<String> urls;
@@ -130,13 +136,13 @@ public class ImageListViewAdaper extends BaseAdapter
      */
     private class MyCallBack implements ImageTaskCallBack
     {
-        public MyCallBack(int index)
+        public MyCallBack()
         {
-            this.index = index;
         }
         @Override
         public void onGettingProgress(int total, int hasGotten, HashMap<String, Object> params)
         {
+            int index = (Integer)params.get("index");
             DownloadProgress data = datas.get(index);
             // 保存下载进度
             if (data != null) {
@@ -162,20 +168,28 @@ public class ImageListViewAdaper extends BaseAdapter
         public void onDownloadingDone(int status, Bitmap bmp, HashMap<String, Object> params)
         {
             int wantedPosition;
+            int index = (Integer)params.get("index");
             wantedPosition = index - (listView.getFirstVisiblePosition() - listView.getHeaderViewsCount());
             View view = listView.getChildAt(wantedPosition);
             if (view!= null) {
                 // 下载完成。显示图片。
                 ViewHolder holder = (ViewHolder) view.getTag();
                 holder.iv.setImageBitmap(bmp);
+                if (firstTime[index]){
+                    animation = new AlphaAnimation(0.1f, 1.0f);
+                    animation.setDuration(200);
+                    animation.setFillAfter(true);
+                    holder.iv.startAnimation(animation);
+                    firstTime[index] = false;
+                }
                 /*
                  * 这里不对bmp参数做任何保存！让libiadc进行图片缓存处理。
                  */
             }
         }
-        private int index;
+        private AlphaAnimation animation;
     }
-    private ArrayList<ImageTaskCallBack> callBacks;
+    private ImageTaskCallBack callBack;
 
     /**
      * 保存每张图片的下载进度。
@@ -200,4 +214,5 @@ public class ImageListViewAdaper extends BaseAdapter
     private ListView listView;
     private LayoutInflater inflater;
     private int[] date;
+    private boolean[] firstTime;
 }
