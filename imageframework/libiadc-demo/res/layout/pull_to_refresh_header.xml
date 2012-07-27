@@ -27,18 +27,6 @@
         android:layout_height="fill_parent"
         android:gravity="center_vertical|center_horizontal"
         >
-        <!--<ProgressBar-->
-            <!--android:id="@+id/pull_to_refresh_progress"-->
-            <!--android:indeterminate="true"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_marginLeft="30dp"-->
-            <!--android:layout_marginRight="20dp"-->
-            <!--android:layout_marginTop="10dp"-->
-            <!--android:visibility="gone"-->
-            <!--android:layout_centerVertical="true"-->
-            <!--/>-->
-
         <ImageView
                 android:id="@+id/pull_to_refresh_progressview"
                 android:layout_width="25dp"
@@ -48,7 +36,7 @@
                 android:layout_marginTop="20dp"
                 android:visibility="gone"
                 android:layout_centerVertical="true"
-                android:src="@drawable/ic_pulltorefresh_progressbar1"
+                android:src="@drawable/ic_pulltorefresh_progressbar"
                 />
 
         <ImageView

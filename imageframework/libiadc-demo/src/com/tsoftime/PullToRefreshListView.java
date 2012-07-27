@@ -1,31 +1,27 @@
 package com.tsoftime;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
 import android.content.Context;
-import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.GestureDetector;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.view.animation.*;
-import android.widget.AbsListView;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ListAdapter;
-import android.widget.ListView;
-import android.widget.TextView;
+import android.widget.*;
 import android.widget.AbsListView.OnScrollListener;
 
-import com.tsoftime.R;
-
-
-public class PullToRefreshListView extends ListView implements
-    OnScrollListener, GestureDetector.OnGestureListener
+/**
+ * 下拉刷新ListView
+ *
+ * 下拉刷新ListView包含如下文件：
+ *  PullToRefreshListView.java
+ *  layout/pull_to_refresh_header.xml
+ *  drawable/ic_pulltorefresh_arrow.png
+ *  drawable/ic_pulltorefresh_progressbar.png
+ *
+ *  使用方式和ListView一样。
+ *  设置OnRefreshListener来监听PullToRefreshListView的下拉刷新事件。
+ *  在完成刷新之后，需要调研那个onRefreshComplete来通知PullToRefreshListView刷新完成。
+ */
+public class PullToRefreshListView extends ListView implements OnScrollListener, GestureDetector.OnGestureListener
 {
 
     private final int MAXHEIGHT = 10;
@@ -33,7 +29,6 @@ public class PullToRefreshListView extends ListView implements
     private static final int PULL_TO_REFRESH = 2;
     private static final int RELEASE_TO_REFRESH = 3;
     private static final int REFRESHING = 4;
-    //private static final int RELEASING = 5;//释放过程做动画用
 
     private static final String TAG = PullToRefreshListView.class.getSimpleName();
 
@@ -189,9 +184,6 @@ public class PullToRefreshListView extends ListView implements
     }
 
     @Override
-    /**
-     * TODO:此方法重写
-     */
     public boolean onTouchEvent(MotionEvent event)
     {
 
@@ -199,8 +191,6 @@ public class PullToRefreshListView extends ListView implements
         localGestureDetector.onTouchEvent(event);
         final int y = (int) event.getY();
 
-//        Log.d(TAG, String.format( "[onTouchEvent]event.Action=%d, currState=%d, refreshState=%d,y=%d",
-//                                    event.getAction(), mCurrentScrollState, mRefreshState, y));
         switch (event.getAction()) {
             case MotionEvent.ACTION_UP:
                 if (!isVerticalScrollBarEnabled()) {
@@ -238,7 +228,7 @@ public class PullToRefreshListView extends ListView implements
     private void applyHeaderPadding(MotionEvent ev)
     {
         if (mRefreshState == REFRESHING) return;
-        
+
         int historicalY = (int) ev.getY();
         // Calculate the padding to apply, we divide by 1.7 to
         // simulate a more resistant effect during pull.
