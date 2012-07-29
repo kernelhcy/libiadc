@@ -102,29 +102,24 @@ class ImageDownloadThreadHandler extends Handler
         }
 
         urlStr = params.getString("url");
-        String filePath = params.getString("save_file_path");
+        String filePath = ImageCacheManager.getInstance().getImageFilePath(urlStr);
         Log.d(TAG, String.format("%s downloads %s, store in %s", getLooper().getThread().getName(), urlStr, filePath));
 
         // find the image from the cache.
-        Bitmap bmp = imageCacheManager.getImageFromFileSystemCache(urlStr);
+        Bitmap bmp = imageCacheManager.getImageFromFileSystemCache(urlStr, params.getLong("expire", Long.MAX_VALUE));
         if (bmp != null) {
-            sendDownloadingProgress(100, 100);
+            File imageFile = new File(filePath);
+            sendDownloadingProgress((int)imageFile.length(), (int)imageFile.length());
             sendDownloadDown(bmp, filePath);
             return;
         }
 
-        // try to dealTheDownloadMessage the image...
+        // try to download the image...
         if (!downloadImage(filePath)) return;
 
         Bitmap image = BitmapFactory.decodeFile(filePath);
         if (image == null) {
             sendError(-1, "Deocde image from file error.");
-            return;
-        }
-
-        // save to cache
-        if(imageCacheManager.saveToFilesystemCache(urlStr, filePath, params.getLong("expire", Long.MAX_VALUE)) < 0) {
-            sendError(-1, "Save to cache error.");
             return;
         }
 

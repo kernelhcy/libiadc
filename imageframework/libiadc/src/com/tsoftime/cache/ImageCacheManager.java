@@ -4,9 +4,12 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
+import com.tsoftime.ImageMangerConfig;
 
 import java.io.File;
 import java.lang.ref.SoftReference;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 /**
@@ -20,6 +23,7 @@ public class ImageCacheManager
     {
         context = ctx;
         cache = new HashMap<String, SoftReference<Bitmap>>();
+        filePathCache = new HashMap<String, String>();
     }
 
     /**
@@ -39,41 +43,82 @@ public class ImageCacheManager
     }
 
     /**
+     * Get the image file path.
+     *
+     * We use the md5 value of the url to create the file path.
+     * If the md5 value of the url is '5d41402abc4b2a76b9719d911017c592', the file path will be
+     * /5/d/4/1402abc4b2a76b9719d911017c592.
+     * @param url
+     * @return
+     */
+    public String getImageFilePath(String url)
+    {
+        // find from the cache
+        String filePath = filePathCache.get(url);
+        if (filePath != null) return filePath;
+
+        // generate the file path
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(url.getBytes());
+            byte[] result = md.digest();
+            StringBuilder sb = new StringBuilder(result.length * 2);
+            for (byte b : result) {
+                sb.append(Character.forDigit((b >>> 4) & 15, 16)).append(Character.forDigit(b & 15, 16));
+            }
+            // create the path
+            StringBuilder path = new StringBuilder();
+            File externalCacheDir = context.getExternalCacheDir();
+            path.append(externalCacheDir.getAbsolutePath());                // external cache dir
+            path.append(ImageMangerConfig.instance().getImageStoreDir());   // image cache dir
+            path.append('/').append(sb.charAt(0));
+            path.append('/').append(sb.charAt(1));
+            path.append('/').append(sb.charAt(2));
+            path.append('/').append(sb.substring(3, sb.length()));
+            filePath = path.toString();
+            filePathCache.put(url, filePath);
+            return filePath;
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
      * Get the image from the file system cache.
      *
      * NOTE:
      *  This method is called in the download thread!
      *
      * @param url   the url of the image
+     * @param expire the expire time of this image
      * @return      the bitmap of the image or null for error or not found.
      */
-    public Bitmap getImageFromFileSystemCache(String url)
+    public Bitmap getImageFromFileSystemCache(String url, long expire)
     {
-        ImageURLPathPair pair = ImageURLPathPair.select(url, context);
-        if (pair == null) return null;
+        String filePath = getImageFilePath(url);
+        if (filePath == null) return null;
+
+        File imageFile = new File(filePath);
+        if (!imageFile.exists()) return null;
 
         // test whether the image cache expire time exceeded
         Date now = Calendar.getInstance().getTime();
-        long timeHasGone = (now.getTime() - pair.getCreatedAt().getTime()) / 1000;
+        long timeHasGone = (now.getTime() - imageFile.lastModified()) / 1000;
         // the expire time has exceeded, return null to reload download the image.
-        if (timeHasGone > pair.getExpire()) {
-            Log.d(TAG, String.format("image %s expire time exceed : %d", pair.getUrl(), timeHasGone));
+        if (timeHasGone > expire) {
+            Log.d(TAG, String.format("image %s expire time exceed : %d", url, timeHasGone));
             // remove the old cach image.
-            File oldFile = new File(pair.getPath());
-            if (oldFile.exists()) oldFile.delete();
+            if (imageFile.exists()) imageFile.delete();
             cache.remove(url);
             return null;
         }
 
-        Log.d(TAG, String.format("%s: %s", pair.getUrl(), pair.getPath()));
-        Bitmap bmp = BitmapFactory.decodeFile(pair.getPath());
-
-        // update the use count
-        pair.setUseCount(pair.getUseCount() + 1);
-        pair.save(context);
+        Log.d(TAG, String.format("%s: %s", url, filePath));
+        Bitmap bmp = BitmapFactory.decodeFile(filePath);
 
         if (bmp == null){
-            Log.d(TAG, String.format("Image decode failed : %s", pair.getPath()));
+            Log.d(TAG, String.format("Image decode failed : %s", filePath));
         }
         return bmp;
     }
@@ -114,47 +159,6 @@ public class ImageCacheManager
         if (cache.get(url) != null) cache.remove(url);
         // cache it
         cache.put(url, ref);
-        printCache();
-    }
-
-    private void printCache()
-    {
-        int refCount = 0, bmpCount = 0;
-        HashMap.Entry<String, SoftReference<Bitmap>> entry;
-        Set<HashMap.Entry<String, SoftReference<Bitmap>>> entries = cache.entrySet();
-        Iterator<HashMap.Entry<String, SoftReference<Bitmap>>> iterator;
-        iterator = entries.iterator();
-        while (iterator.hasNext()) {
-            entry = iterator.next();
-            refCount++;
-            if (entry.getValue().get() != null) bmpCount++;
-        }
-        Log.d(TAG, String.format("Cache status, size : %d, bmp count : %d", refCount, bmpCount));
-    }
-
-    /**
-     * Save this image to cache
-     *
-     * NOTE:
-     *  This method is called in the download thread!
-     *
-     * @param url       the url of the image
-     * @param filePath  the path of the image
-     * @param expire    the expire time
-     * @return          > 0 for success, and the return is the id.  < 0 for error.
-     */
-    public long saveToFilesystemCache(String url, String filePath, long expire)
-    {
-        ImageURLPathPair pair = ImageURLPathPair.select(url, context);
-        if (pair == null) {
-            pair = new ImageURLPathPair();
-        }
-        pair.setPath(filePath);
-        pair.setUrl(url);
-        pair.setExpire(expire);
-
-        long id = pair.save(context);
-        return  id;
     }
 
     private Context context;
@@ -164,6 +168,6 @@ public class ImageCacheManager
      * Save the soft references of the bitmaps.
      */
     private HashMap<String, SoftReference<Bitmap>> cache;
-
+    private HashMap<String, String> filePathCache;
     private static ImageCacheManager mInstance = null;
 }

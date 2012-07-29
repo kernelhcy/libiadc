@@ -41,7 +41,7 @@ public class DemoActivity extends Activity
         final ArrayList<String> urls = new ArrayList<String>();
         //http://vm-192-168-18-243.shengyun.grandcloud.cn/mig31/
         String host = "http://vm-192-168-18-243.shengyun.grandcloud.cn/big/";
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 100; ++i) {
             String url =  host + (i + 1) + ".jpg";
             adaper.addURL(url);
             urls.add(url);
@@ -65,7 +65,7 @@ public class DemoActivity extends Activity
                         imageManager.removeAllTasks();
                         for (int i = 0, j = firstVisibleItem - 1; i < visibleItemCount; ++i, ++j) {
                             Log.d(DemoActivity.class.getSimpleName(), String.format("downloading ... %d.jpg", j));
-                            adaper.downloadImage(j - 1);
+                            adaper.downloadImage(j);
                         }
                         break;
                     default:

@@ -7,9 +7,6 @@ import android.os.Message;
 import android.util.Log;
 import com.tsoftime.cache.ImageCacheManager;
 
-import java.io.File;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 
@@ -78,12 +75,12 @@ public class ImageManager
         Bitmap bmp = cacheManager.getImageFromCache(url);
         if (bmp != null) {
             Log.d(TAG, String.format("Cached! %s", url));
-            callBack.onGettingProgress(100, 100, params);
+            callBack.onGettingProgress(bmp.getWidth() * bmp.getHeight(), bmp.getWidth() * bmp.getHeight(), params);
             callBack.onDownloadingDone(SUCCESS, bmp, params);
             return;
         }
 
-        // try to get the image from the filesystem cache or network
+        // try to get the image from the network
         Log.d(TAG, String.format("get image %s %s", url, priority.toString()));
         ImageTask task = new ImageTask(url, params, callBack, priority, expireTime);
         newTasksQueues.enqueue(task);
@@ -138,33 +135,12 @@ public class ImageManager
                 Message msg = t.getHandler().obtainMessage(ImageDownloadThreadHandler.DOWNLOAD_IMAGE);
                 Bundle bundle = new Bundle();
                 bundle.putString("url", task.getUrl());
-                bundle.putString("save_file_path", getImageStorePath());
                 bundle.putLong("expire", task.getExpire());
                 msg.setData(bundle);
                 t.getHandler().sendMessage(msg);
                 runningTasksMap.put(task.getUrl(), task);
             }
         }
-    }
-
-    /**
-     * Get the path to which the image is stored.
-     * @return
-     */
-    private String getImageStorePath()
-    {
-        StringBuilder sb = new StringBuilder();
-        File externalCacheDir = context.getExternalCacheDir();
-        sb.append(externalCacheDir.getAbsolutePath());              // external cache dir
-        sb.append(config.getImageStoreDir());                       // image cache dir
-        Date now = Calendar.getInstance().getTime();
-        sb.append("/").append(now.getYear());
-        sb.append("/").append(now.getMonth());
-        sb.append("/").append(now.getDay());
-        sb.append("/").append(now.getHours());
-        //sb.append("/").append(now.getMinutes());
-        sb.append("/image_").append(System.currentTimeMillis());     // image name with ext
-        return sb.toString();
     }
 
     /**

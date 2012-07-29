@@ -3,7 +3,6 @@ package com.tsoftime;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import com.tsoftime.cache.ImageURLPathPair;
 import com.tsoftime.messeage.params.*;
 
 /**
@@ -102,21 +101,6 @@ class ImageManagerHandler extends Handler
         // Maybe some download thread is idle, try to run tasks on these idle threads if there are more tasks.
         imageManager.runTasks();
     }
-
-    /**
-     * Save this file to image cache.
-     * @param url   the url
-     * @param path  the path
-     * @return  -1 for error.
-     */
-    private long saveToCache(String url, String path)
-    {
-        ImageURLPathPair pair = new ImageURLPathPair();
-        pair.setPath(path);
-        pair.setUrl(url);
-        return  pair.save(imageManager.getContext());
-    }
-
     private static final String TAG = ImageManagerHandler.class.getSimpleName();
     private ImageManager imageManager;
 }
