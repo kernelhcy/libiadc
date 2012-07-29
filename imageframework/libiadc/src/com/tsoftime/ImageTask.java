@@ -2,6 +2,7 @@ package com.tsoftime;
 
 import android.graphics.Bitmap;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -46,8 +47,8 @@ class ImageTask
                     , TaskPriority priority, long expire)
     {
         this.url = url;
-        this.params = params;
-        this.callBack = callBack;
+        this.callBacks = new ArrayList<TaskParamsPair>();
+        this.callBacks.add(new TaskParamsPair(callBack, params));
         this.priority = priority;
         this.expire = expire;
     }
@@ -66,26 +67,26 @@ class ImageTask
     {
         this.total = total;
         this.hasRead = hasRead;
-        if (callBack != null) callBack.onGettingProgress(total, hasRead, params);
+        for (TaskParamsPair tpp : callBacks) {
+            tpp.callBack.onGettingProgress(total, hasRead, tpp.params);
+        }
     }
 
     /**
      * Notify the image has been downloaded.
      * @param bmp       the image
+     * @param status    the status
      */
-    public void onDownloadingDown(Bitmap bmp)
+    public void onDownloadingDone(int status, Bitmap bmp)
     {
-        if (callBack != null) callBack.onDownloadingDone(1, bmp, params);
+        for (TaskParamsPair tpp : callBacks) {
+            tpp.callBack.onDownloadingDone(status, bmp, tpp.params);
+        }
     }
 
-    public ImageTaskCallBack getCallBack()
+    public void addCallBack(ImageTaskCallBack callBack, HashMap<String, Object> params)
     {
-        return callBack;
-    }
-
-    public void setCallBack(ImageTaskCallBack callBack)
-    {
-        this.callBack = callBack;
+        this.callBacks.add(new TaskParamsPair(callBack, params));
     }
 
     public String getUrl()
@@ -96,16 +97,6 @@ class ImageTask
     public void setUrl(String url)
     {
         this.url = url;
-    }
-
-    public HashMap<String, Object> getParams()
-    {
-        return params;
-    }
-
-    public void setParams(HashMap<String, Object> params)
-    {
-        this.params = params;
     }
 
     public long getTotal()
@@ -148,10 +139,21 @@ class ImageTask
         this.expire = expire;
     }
 
-    private ImageTaskCallBack callBack;
+    private ArrayList<TaskParamsPair> callBacks;
     private String url;
-    private HashMap<String, Object> params;
     private long total, hasRead;
     private TaskPriority priority;
     private long expire;
+
+    private class TaskParamsPair
+    {
+        ImageTaskCallBack callBack;
+        HashMap<String, Object> params;
+
+        private TaskParamsPair(ImageTaskCallBack callBack, HashMap<String, Object> params)
+        {
+            this.callBack = callBack;
+            this.params = params;
+        }
+    }
 }

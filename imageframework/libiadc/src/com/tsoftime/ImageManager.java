@@ -80,9 +80,18 @@ public class ImageManager
             return;
         }
 
-        // try to get the image from the network
+        // try to find a same task.
+        ImageTask task = findSameTask(url, priority);
+        if (task != null) {
+            task.addCallBack(callBack, params);
+            // run the tasks.
+            runTasks();
+            return;
+        }
+
+        // create a new task
         Log.d(TAG, String.format("get image %s %s", url, priority.toString()));
-        ImageTask task = new ImageTask(url, params, callBack, priority, expireTime);
+        task = new ImageTask(url, params, callBack, priority, expireTime);
         newTasksQueues.enqueue(task);
 
         // run the tasks.
@@ -116,6 +125,28 @@ public class ImageManager
      *  Above is ALL the public interfaces.
      * *************************************
      */
+
+    /**
+     * Find the save task from the new tasks queues and the running tasks map.
+     * @param url
+     * @param priority
+     * @return
+     */
+    private ImageTask findSameTask(String url, ImageTask.TaskPriority priority)
+    {
+        ImageTask task = newTasksQueues.findTask(url, priority);
+        if (task == null) {
+            task = runningTasksMap.get(url);
+            if (task != null) {
+                Log.d(TAG, String.format("Got a same task for %s of priority %s from running tasks map!"
+                                            , url, priority.toString()));
+            }
+        } else {
+            Log.d(TAG, String.format("Got a same task for %s of priority %s from new tasks queues!"
+                                            , url, priority.toString()));
+        }
+        return task;
+    }
 
     /**
      * Find a idle thread and run an image task on it.
@@ -156,8 +187,6 @@ public class ImageManager
 
         this.downloadThreadNumber = 1;
         this.threads = new HashMap<String, ImageDownloadThread>();
-
-        this.config = ImageMangerConfig.instance();
 
         initDownloadTreads();
     }
@@ -238,7 +267,7 @@ public class ImageManager
     {
         ImageTask task = runningTasksMap.get(url);
         if (task == null) return;
-        task.getCallBack().onGettingProgress(total, hasRead, task.getParams());
+        task.onDownloadingProgress(total, hasRead);
     }
 
     /**
@@ -249,9 +278,9 @@ public class ImageManager
      */
     void onDownloadDone(int status, String url, Bitmap bmp)
     {
-        ImageTask task = runningTasksMap.get(url);
+        ImageTask task = runningTasksMap.remove(url);
         if (task == null) return;
-        task.getCallBack().onDownloadingDone(status, bmp, task.getParams());
+        task.onDownloadingDone(status, bmp);
 
         if (status == SUCCESS && bmp != null) {
             // save the cache
@@ -276,8 +305,6 @@ public class ImageManager
     private HashMap<String, ImageDownloadThread> threads;           // download threads
 
     private static ImageManager mInstance = null;
-
-    private ImageMangerConfig config;
 
     private static final String TAG = ImageManager.class.getSimpleName();
 }

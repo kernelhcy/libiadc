@@ -47,6 +47,37 @@ class ImageTaskQueues
     }
 
     /**
+     * Find the task
+     * @param url
+     * @param priority
+     * @return
+     */
+    public ImageTask findTask(String url, ImageTask.TaskPriority priority)
+    {
+        switch (priority)
+        {
+            case DEFAULT_PRIORITY:
+                for(ImageTask t : defaultPriorityQueue) {
+                    if (t.getUrl().equals(url)) return t;
+                }
+                break;
+            case HIGH_PRIORITY:
+                for(ImageTask t : highPriorityQueue) {
+                    if (t.getUrl().equals(url)) return t;
+                }
+                break;
+            case LOW_PRIORITY:
+                for(ImageTask t : lowPriorityQueue) {
+                    if (t.getUrl().equals(url)) return t;
+                }
+                break;
+            default:
+                break;
+        }
+        return null;
+    }
+
+    /**
      * Enqueue a task
      * @param task
      */
