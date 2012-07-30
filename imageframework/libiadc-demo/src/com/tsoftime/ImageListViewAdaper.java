@@ -176,7 +176,7 @@ public class ImageListViewAdaper extends BaseAdapter
                 ViewHolder holder = (ViewHolder) view.getTag();
                 holder.iv.setImageBitmap(bmp);
                 if (firstTime[index]){
-                    animation = new AlphaAnimation(0.1f, 1.0f);
+                    animation = new AlphaAnimation(0f, 1.0f);
                     animation.setDuration(200);
                     animation.setFillAfter(true);
                     holder.iv.startAnimation(animation);

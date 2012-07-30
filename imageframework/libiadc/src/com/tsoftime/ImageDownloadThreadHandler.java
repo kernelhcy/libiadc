@@ -51,7 +51,6 @@ class ImageDownloadThreadHandler extends Handler
     public ImageDownloadThreadHandler(ImageDownloadThread thread, ImageManagerHandler handler)
     {
         this.thread = thread;
-        this.context = this.thread.getContext();
         this.imageManagerHandler = handler;
         this.imageCacheManager = ImageCacheManager.getInstance();
     }
@@ -136,13 +135,13 @@ class ImageDownloadThreadHandler extends Handler
         int total = 0, hasRead = 0;
         try {
             URL url = new URL(urlStr);
+            File outFile = new File(filePath);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             int responseCode = connection.getResponseCode();
-            if (responseCode == 404) {
+            if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
                 sendNoSuchImage(urlStr);
                 return false;
-            }
-            if (responseCode != 200) {
+            }else if (responseCode != HttpURLConnection.HTTP_OK) {
                 sendError(-1, String.format("Http error %d %s", responseCode, connection.getResponseMessage()));
                 return false;
             }
@@ -151,7 +150,7 @@ class ImageDownloadThreadHandler extends Handler
             String contentType = connection.getContentType();
             Log.d(TAG, contentType);
             InputStream is = (InputStream) connection.getContent();
-            File outFile = new File(filePath);
+
             File dir = outFile.getParentFile();
 
             // loop until the os has created the directory.
@@ -253,7 +252,6 @@ class ImageDownloadThreadHandler extends Handler
     }
 
     private String urlStr;
-    private Context context;
     private ImageCacheManager imageCacheManager;
     private ImageDownloadThread thread;
     private ImageManagerHandler imageManagerHandler;

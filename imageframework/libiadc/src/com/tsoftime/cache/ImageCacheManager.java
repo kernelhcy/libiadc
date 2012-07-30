@@ -109,7 +109,7 @@ public class ImageCacheManager
         if (timeHasGone > expire) {
             Log.d(TAG, String.format("image %s expire time exceed : %d", url, timeHasGone));
             // remove the old cach image.
-            if (imageFile.exists()) imageFile.delete();
+            // if (imageFile.exists()) imageFile.delete();
             cache.remove(url);
             return null;
         }
