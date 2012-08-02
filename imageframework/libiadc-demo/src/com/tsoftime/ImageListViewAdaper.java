@@ -90,6 +90,7 @@ public class ImageListViewAdaper extends BaseAdapter
         DownloadProgress data = datas.get(i);
         holder.pb.setMax(data.total);
         holder.pb.setProgress(data.hasRead);
+        holder.pb.setVisibility(View.VISIBLE);
 
         holder.tv.setText(String.format("%d%%        %d/%d", (int)((float)data.hasRead * 100 / (float)data.total)
                                     , data.hasRead, data.total));
@@ -182,6 +183,7 @@ public class ImageListViewAdaper extends BaseAdapter
                     holder.iv.startAnimation(animation);
                     firstTime[index] = false;
                 }
+                holder.pb.setVisibility(View.GONE);
                 /*
                  * 这里不对bmp参数做任何保存！让libiadc进行图片缓存处理。
                  */

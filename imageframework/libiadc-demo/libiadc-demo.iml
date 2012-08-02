@@ -41,6 +41,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="classes" level="project" />
     <orderEntry type="module" module-name="libiadc" />
+    <orderEntry type="library" name="libjsonet" level="project" />
   </component>
 </module>
 
