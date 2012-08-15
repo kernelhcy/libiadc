@@ -1,6 +1,5 @@
 package com.tsoftime;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -99,13 +98,15 @@ class ImageDownloadThreadHandler extends Handler
             sendError(-1, "msg.getData() == null");
             return;
         }
-
+        String imageQuality = params.getString("image_quality");
         urlStr = params.getString("url");
         String filePath = ImageCacheManager.getInstance().getImageFilePath(urlStr);
         Log.d(TAG, String.format("%s downloads %s, store in %s", getLooper().getThread().getName(), urlStr, filePath));
 
         // find the image from the cache.
-        Bitmap bmp = imageCacheManager.getImageFromFileSystemCache(urlStr, params.getLong("expire", Long.MAX_VALUE));
+        Bitmap bmp = imageCacheManager.getImageFromFileSystemCache(urlStr
+                                                        , params.getLong("expire", Long.MAX_VALUE)
+                                                        , imageQuality);
         if (bmp != null) {
             File imageFile = new File(filePath);
             sendDownloadingProgress((int)imageFile.length(), (int)imageFile.length());
@@ -116,7 +117,17 @@ class ImageDownloadThreadHandler extends Handler
         // try to download the image...
         if (!downloadImage(filePath)) return;
 
-        Bitmap image = BitmapFactory.decodeFile(filePath);
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = 1;
+
+        if (imageQuality.equals(ImageQuality.QUALITY_MEDIUM.toString())) {
+            options.inSampleSize = 2;
+        } else if (imageQuality.equals(ImageQuality.QUALITY_LOW.toString())) {
+            options.inSampleSize = 4;
+        }
+
+        Bitmap image = BitmapFactory.decodeFile(filePath, options);
+
         if (image == null) {
             sendError(-1, "Deocde image from file error.");
             return;

@@ -112,7 +112,7 @@ public class ImageListViewAdaper extends BaseAdapter
         HashMap<String, Object> params = new HashMap<String, Object>();
         params.put("index", i);
         imageManager.dispatchImageTask(urls.get(i), params, callBack
-                                    , TaskPriority.DEFAULT_PRIORITY, 60 * 60);
+                                    , TaskPriority.DEFAULT_PRIORITY, 60 * 60, ImageQuality.QUALITY_MEDIUM);
 
         return view;
     }
@@ -128,7 +128,7 @@ public class ImageListViewAdaper extends BaseAdapter
         HashMap<String, Object> params = new HashMap<String, Object>();
         params.put("index", index);
         imageManager.dispatchImageTask(urls.get(index), params, callBack
-                                            , TaskPriority.DEFAULT_PRIORITY, 60 * 60);
+                                            , TaskPriority.DEFAULT_PRIORITY, 60 * 60, ImageQuality.QUALITY_MEDIUM);
     }
 
     private ArrayList<String> urls;

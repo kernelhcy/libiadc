@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 import com.tsoftime.ImageMangerConfig;
+import com.tsoftime.ImageQuality;
 
 import java.io.File;
 import java.lang.ref.SoftReference;
@@ -94,7 +95,7 @@ public class ImageCacheManager
      * @param expire the expire time of this image
      * @return      the bitmap of the image or null for error or not found.
      */
-    public Bitmap getImageFromFileSystemCache(String url, long expire)
+    public Bitmap getImageFromFileSystemCache(String url, long expire, String imageQuality)
     {
         String filePath = getImageFilePath(url);
         if (filePath == null) return null;
@@ -115,7 +116,17 @@ public class ImageCacheManager
         }
 
         Log.d(TAG, String.format("%s: %s", url, filePath));
-        Bitmap bmp = BitmapFactory.decodeFile(filePath);
+
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = 1;
+
+        if (imageQuality.equals(ImageQuality.QUALITY_MEDIUM.toString())) {
+            options.inSampleSize = 2;
+        } else if (imageQuality.equals(ImageQuality.QUALITY_LOW.toString())) {
+            options.inSampleSize = 4;
+        }
+
+        Bitmap bmp = BitmapFactory.decodeFile(filePath, options);
 
         if (bmp == null){
             Log.d(TAG, String.format("Image decode failed : %s", filePath));
@@ -152,13 +163,13 @@ public class ImageCacheManager
      */
     public void saveToCache(String url, Bitmap bmp)
     {
-//        if (url == null || bmp == null) return;
-//        Log.d(TAG, String.format("cache bmp %s", url));
-//        SoftReference<Bitmap> ref = new SoftReference<Bitmap>(bmp);
-//        // remove the old cache
-//        if (cache.get(url) != null) cache.remove(url);
-//        // cache it
-//        cache.put(url, ref);
+        if (url == null || bmp == null) return;
+        Log.d(TAG, String.format("cache bmp %s", url));
+        SoftReference<Bitmap> ref = new SoftReference<Bitmap>(bmp);
+        // remove the old cache
+        if (cache.get(url) != null) cache.remove(url);
+        // cache it
+        cache.put(url, ref);
     }
 
     private Context context;

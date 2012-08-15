@@ -2,7 +2,6 @@ package com.tsoftime;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -89,18 +88,18 @@ public class ViewPagerAdapter extends BaseAdapter
         HashMap<String, Object> params = new HashMap<String, Object>();
         params.put("index", i);
         imageManager.dispatchImageTask(mUrls.get(i), params, mCallback
-                            , TaskPriority.DEFAULT_PRIORITY, 60 * 60);
+                            , TaskPriority.DEFAULT_PRIORITY, 60 * 60, ImageQuality.QUALITY_LOW);
         if (i - 1 >= 0) {
             params = new HashMap<String, Object>();
             params.put("index", i - 1);
             imageManager.dispatchImageTask(mUrls.get(i - 1), params, mCallback
-                , TaskPriority.DEFAULT_PRIORITY, 60 * 60);
+                , TaskPriority.DEFAULT_PRIORITY, 60 * 60, ImageQuality.QUALITY_LOW);
         }
         if (i + 1 < mUrls.size()) {
             params = new HashMap<String, Object>();
             params.put("index", i + 1);
             imageManager.dispatchImageTask(mUrls.get(i + 1), params, mCallback
-                , TaskPriority.DEFAULT_PRIORITY, 60 * 60);
+                , TaskPriority.DEFAULT_PRIORITY, 60 * 60, ImageQuality.QUALITY_LOW);
         }
 
         return view;

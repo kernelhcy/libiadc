@@ -15,18 +15,19 @@ import java.util.HashMap;
 class ImageTask
 {
     public ImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
-                    , TaskPriority priority, long expire)
+                    , TaskPriority priority, long expire, ImageQuality imageQuality)
     {
         this.url = url;
         this.callBacks = new ArrayList<TaskParamsPair>();
         this.callBacks.add(new TaskParamsPair(callBack, params));
         this.priority = priority;
         this.expire = expire;
+        this.imageQuality = imageQuality;
     }
 
-    public ImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack)
+    public ImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack, ImageQuality imageQuality)
     {
-        this(url, params, callBack, TaskPriority.DEFAULT_PRIORITY, Long.MAX_VALUE);
+        this(url, params, callBack, TaskPriority.DEFAULT_PRIORITY, Long.MAX_VALUE, imageQuality);
     }
 
     /**
@@ -110,11 +111,22 @@ class ImageTask
         this.expire = expire;
     }
 
+    public ImageQuality getImageQuality()
+    {
+        return imageQuality;
+    }
+
+    public void setImageQuality(ImageQuality imageQuality)
+    {
+        this.imageQuality = imageQuality;
+    }
+
     private ArrayList<TaskParamsPair> callBacks;
     private String url;
     private long total, hasRead;
     private TaskPriority priority;
     private long expire;
+    private ImageQuality imageQuality;
 
     private class TaskParamsPair
     {
