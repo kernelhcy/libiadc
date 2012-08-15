@@ -5,10 +5,9 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Message;
 import android.util.Log;
+import com.tsoftime.cache.ImageCacheManager;
+import com.tsoftime.messeage.params.TaskPriority;
 
-import java.io.File;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 
@@ -39,7 +38,7 @@ public class ImageManager
     public static void init(Context context)
     {
         mInstance = new ImageManager(context);
-
+        ImageCacheManager.init(context);
     }
 
     /**
@@ -56,20 +55,45 @@ public class ImageManager
      *
      * The task will be appended to the end of the downloading queue.
      *
-     * @param url       the url of the image. like : "http://www.google.com/images/1.png"
-     * @param params    the parameters you want to receive in the ImageTaskCallBack callbacks.
-     * @param callBack  the callback. Used to notify you the progress.
-     * @param priority  the task priority.
+     * @param url           the url of the image. like : "http://www.google.com/images/1.png"
+     * @param params        the parameters you want to receive in the ImageTaskCallBack callbacks.
+     * @param callBack      the callback. Used to notify you the progress.
+     * @param priority      the task priority.
+     * @param expireTime    the expire time(second). The image will be cached until the expire time exceeds.
+     *                      After the expire time exceeds, the image will be removed from the cache and get a new
+     *                      copy from the remote server.
+     * @param imageQuality  the quality of the image
      */
     public void dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
-        , ImageTask.TaskPriority priority)
+        , TaskPriority priority, long expireTime, ImageQuality imageQuality)
     {
         if (url == null) {
             callBack.onDownloadingDone(NO_SUCH_IMAGE, null, params);
             return;
         }
+
+        // try to get the image from the cache
+        ImageCacheManager cacheManager = ImageCacheManager.getInstance();
+        Bitmap bmp = cacheManager.getImageFromCache(url + imageQuality.toString());
+        if (bmp != null) {
+            Log.d(TAG, String.format("Cached! %s", url));
+            callBack.onGettingProgress(bmp.getWidth() * bmp.getHeight(), bmp.getWidth() * bmp.getHeight(), params);
+            callBack.onDownloadingDone(SUCCESS, bmp, params);
+            return;
+        }
+
+        // try to find a same task.
+        ImageTask task = findSameTask(url, priority);
+        if (task != null) {
+            task.addCallBack(callBack, params);
+            // run the tasks.
+            runTasks();
+            return;
+        }
+
+        // create a new task
         Log.d(TAG, String.format("get image %s %s", url, priority.toString()));
-        ImageTask task = new ImageTask(url, params, callBack, priority);
+        task = new ImageTask(url, params, callBack, priority, expireTime, imageQuality);
         newTasksQueues.enqueue(task);
 
         // run the tasks.
@@ -77,15 +101,17 @@ public class ImageManager
     }
 
     /**
-     * Dispatch an image task using default priority.
+     * Dispatch an image task using default priority and will never expire.
      *
      * @param url       the url of the image. like : "http://www.google.com/images/1.png"
      * @param params    the parameters you want to receive in the ImageTaskCallBack callbacks.
      * @param callBack  the callback. Used to notify you the progress.
+     * @param imageQuality  the quality of the image
      */
-    public void dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack)
+    public void dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
+                                        , ImageQuality imageQuality)
     {
-        dispatchImageTask(url, params, callBack, ImageTask.TaskPriority.DEFAULT_PRIORITY);
+        dispatchImageTask(url, params, callBack, TaskPriority.DEFAULT_PRIORITY, Long.MAX_VALUE, imageQuality);
     }
 
     /**
@@ -105,6 +131,28 @@ public class ImageManager
      */
 
     /**
+     * Find the save task from the new tasks queues and the running tasks map.
+     * @param url
+     * @param priority
+     * @return
+     */
+    private ImageTask findSameTask(String url, TaskPriority priority)
+    {
+        ImageTask task = newTasksQueues.findTask(url, priority);
+        if (task == null) {
+            task = runningTasksMap.get(url);
+            if (task != null) {
+                Log.d(TAG, String.format("Got a same task for %s of priority %s from running tasks map!"
+                                            , url, priority.toString()));
+            }
+        } else {
+            Log.d(TAG, String.format("Got a same task for %s of priority %s from new tasks queues!"
+                                            , url, priority.toString()));
+        }
+        return task;
+    }
+
+    /**
      * Find a idle thread and run an image task on it.
      * If no thread is idle, just do nothing.
      * When some download thread is idle, it will send some message to the image manager. When the image manager
@@ -122,32 +170,13 @@ public class ImageManager
                 Message msg = t.getHandler().obtainMessage(ImageDownloadThreadHandler.DOWNLOAD_IMAGE);
                 Bundle bundle = new Bundle();
                 bundle.putString("url", task.getUrl());
-                bundle.putString("save_file_path", getImageStorePath());
+                bundle.putLong("expire", task.getExpire());
+                bundle.putString("image_quality", task.getImageQuality().toString());
                 msg.setData(bundle);
                 t.getHandler().sendMessage(msg);
                 runningTasksMap.put(task.getUrl(), task);
             }
         }
-    }
-
-    /**
-     * Get the path to which the image is stored.
-     * @return
-     */
-    private String getImageStorePath()
-    {
-        StringBuilder sb = new StringBuilder();
-        File externalCacheDir = context.getExternalCacheDir();
-        sb.append(externalCacheDir.getAbsolutePath());              // external cache dir
-        sb.append(config.getImageStoreDir());                       // image cache dir
-        Date now = Calendar.getInstance().getTime();
-        sb.append("/").append(now.getYear());
-        sb.append("/").append(now.getMonth());
-        sb.append("/").append(now.getDay());
-        sb.append("/").append(now.getHours());
-        sb.append("/").append(now.getMinutes());
-        sb.append("/image_").append(System.currentTimeMillis());     // image name with ext
-        return sb.toString();
     }
 
     /**
@@ -163,8 +192,6 @@ public class ImageManager
 
         this.downloadThreadNumber = 1;
         this.threads = new HashMap<String, ImageDownloadThread>();
-
-        this.config = ImageMangerConfig.instance();
 
         initDownloadTreads();
     }
@@ -245,7 +272,7 @@ public class ImageManager
     {
         ImageTask task = runningTasksMap.get(url);
         if (task == null) return;
-        task.getCallBack().onGettingProgress(total, hasRead, task.getParams());
+        task.onDownloadingProgress(total, hasRead);
     }
 
     /**
@@ -256,9 +283,16 @@ public class ImageManager
      */
     void onDownloadDone(int status, String url, Bitmap bmp)
     {
-        ImageTask task = runningTasksMap.get(url);
+        ImageTask task = runningTasksMap.remove(url);
         if (task == null) return;
-        task.getCallBack().onDownloadingDone(status, bmp, task.getParams());
+        task.onDownloadingDone(status, bmp);
+
+        if (status == SUCCESS && bmp != null) {
+            // save the cache
+            Log.d(TAG, String.format("Cache bitmap, %s", url));
+            ImageCacheManager cacheManager = ImageCacheManager.getInstance();
+            cacheManager.saveToCache(url + task.getImageQuality().toString(), bmp);
+        }
     }
 
     Context getContext()
@@ -276,8 +310,6 @@ public class ImageManager
     private HashMap<String, ImageDownloadThread> threads;           // download threads
 
     private static ImageManager mInstance = null;
-
-    private ImageMangerConfig config;
 
     private static final String TAG = ImageManager.class.getSimpleName();
 }

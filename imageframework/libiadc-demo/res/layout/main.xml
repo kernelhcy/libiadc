@@ -1,14 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    >
-<ListView
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:id="@+id/listview">
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:orientation="vertical"
+             android:layout_width="fill_parent"
+             android:layout_height="fill_parent">
+    <LinearLayout android:orientation="vertical"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent">
+        <com.tsoftime.PullToRefreshListView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:fadingEdge="none"
+                android:id="@+id/listview">
 
-</ListView>
-</LinearLayout>
+        </com.tsoftime.PullToRefreshListView>
+    </LinearLayout>
+    <LinearLayout android:orientation="vertical"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent">
+        <TextView
+                android:layout_width="80dp"
+                android:layout_height="30dp"
+                android:background="@drawable/date_button_bg"
+                android:id="@+id/up_date_label"
+                android:text="第五天"
+                android:gravity="center_vertical"
+                android:paddingLeft="10dp"
+                android:paddingTop="0dp"
+                android:paddingBottom="0dp"
+                android:textColor="#fff"
+                android:visibility="visible"
+                />
+    </LinearLayout>
+</FrameLayout>
 

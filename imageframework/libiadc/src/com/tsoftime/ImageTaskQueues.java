@@ -1,5 +1,7 @@
 package com.tsoftime;
 
+import com.tsoftime.messeage.params.TaskPriority;
+
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -42,6 +44,37 @@ class ImageTaskQueues
             return defaultPriorityQueue.poll();
         } else if (lowPriorityQueue.size() > 0) {
             return lowPriorityQueue.poll();
+        }
+        return null;
+    }
+
+    /**
+     * Find the task
+     * @param url
+     * @param priority
+     * @return
+     */
+    public ImageTask findTask(String url, TaskPriority priority)
+    {
+        switch (priority)
+        {
+            case DEFAULT_PRIORITY:
+                for(ImageTask t : defaultPriorityQueue) {
+                    if (t.getUrl().equals(url)) return t;
+                }
+                break;
+            case HIGH_PRIORITY:
+                for(ImageTask t : highPriorityQueue) {
+                    if (t.getUrl().equals(url)) return t;
+                }
+                break;
+            case LOW_PRIORITY:
+                for(ImageTask t : lowPriorityQueue) {
+                    if (t.getUrl().equals(url)) return t;
+                }
+                break;
+            default:
+                break;
         }
         return null;
     }

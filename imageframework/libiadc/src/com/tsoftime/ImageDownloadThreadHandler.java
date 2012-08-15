@@ -1,6 +1,5 @@
 package com.tsoftime;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -51,9 +50,8 @@ class ImageDownloadThreadHandler extends Handler
     public ImageDownloadThreadHandler(ImageDownloadThread thread, ImageManagerHandler handler)
     {
         this.thread = thread;
-        this.context = this.thread.getContext();
         this.imageManagerHandler = handler;
-        this.imageCacheManager = new ImageCacheManager(context);
+        this.imageCacheManager = ImageCacheManager.getInstance();
     }
 
     /**
@@ -100,31 +98,38 @@ class ImageDownloadThreadHandler extends Handler
             sendError(-1, "msg.getData() == null");
             return;
         }
-
+        String imageQuality = params.getString("image_quality");
         urlStr = params.getString("url");
-        String filePath = params.getString("save_file_path");
+        String filePath = ImageCacheManager.getInstance().getImageFilePath(urlStr);
         Log.d(TAG, String.format("%s downloads %s, store in %s", getLooper().getThread().getName(), urlStr, filePath));
 
         // find the image from the cache.
-        Bitmap bmp = imageCacheManager.getImage(urlStr);
+        Bitmap bmp = imageCacheManager.getImageFromFileSystemCache(urlStr
+                                                        , params.getLong("expire", Long.MAX_VALUE)
+                                                        , imageQuality);
         if (bmp != null) {
-            sendDownloadingProgress(100, 100);
+            File imageFile = new File(filePath);
+            sendDownloadingProgress((int)imageFile.length(), (int)imageFile.length());
             sendDownloadDown(bmp, filePath);
             return;
         }
 
-        // try to dealTheDownloadMessage the image...
+        // try to download the image...
         if (!downloadImage(filePath)) return;
 
-        Bitmap image = BitmapFactory.decodeFile(filePath);
-        if (image == null) {
-            sendError(-1, "Deocde image from file error.");
-            return;
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = 1;
+
+        if (imageQuality.equals(ImageQuality.QUALITY_MEDIUM.toString())) {
+            options.inSampleSize = 2;
+        } else if (imageQuality.equals(ImageQuality.QUALITY_LOW.toString())) {
+            options.inSampleSize = 4;
         }
 
-        // save to cache
-        if(imageCacheManager.saveToCache(urlStr, filePath) < 0) {
-            sendError(-1, "Save to cache error.");
+        Bitmap image = BitmapFactory.decodeFile(filePath, options);
+
+        if (image == null) {
+            sendError(-1, "Deocde image from file error.");
             return;
         }
 
@@ -141,13 +146,13 @@ class ImageDownloadThreadHandler extends Handler
         int total = 0, hasRead = 0;
         try {
             URL url = new URL(urlStr);
+            File outFile = new File(filePath);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             int responseCode = connection.getResponseCode();
-            if (responseCode == 404) {
+            if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
                 sendNoSuchImage(urlStr);
                 return false;
-            }
-            if (responseCode != 200) {
+            }else if (responseCode != HttpURLConnection.HTTP_OK) {
                 sendError(-1, String.format("Http error %d %s", responseCode, connection.getResponseMessage()));
                 return false;
             }
@@ -156,7 +161,7 @@ class ImageDownloadThreadHandler extends Handler
             String contentType = connection.getContentType();
             Log.d(TAG, contentType);
             InputStream is = (InputStream) connection.getContent();
-            File outFile = new File(filePath);
+
             File dir = outFile.getParentFile();
 
             // loop until the os has created the directory.
@@ -258,7 +263,6 @@ class ImageDownloadThreadHandler extends Handler
     }
 
     private String urlStr;
-    private Context context;
     private ImageCacheManager imageCacheManager;
     private ImageDownloadThread thread;
     private ImageManagerHandler imageManagerHandler;
