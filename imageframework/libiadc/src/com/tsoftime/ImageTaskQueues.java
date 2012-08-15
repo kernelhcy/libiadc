@@ -1,5 +1,7 @@
 package com.tsoftime;
 
+import com.tsoftime.messeage.params.TaskPriority;
+
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -52,7 +54,7 @@ class ImageTaskQueues
      * @param priority
      * @return
      */
-    public ImageTask findTask(String url, ImageTask.TaskPriority priority)
+    public ImageTask findTask(String url, TaskPriority priority)
     {
         switch (priority)
         {

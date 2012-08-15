@@ -10,6 +10,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import com.tsoftime.messeage.params.TaskPriority;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,18 +89,18 @@ public class ViewPagerAdapter extends BaseAdapter
         HashMap<String, Object> params = new HashMap<String, Object>();
         params.put("index", i);
         imageManager.dispatchImageTask(mUrls.get(i), params, mCallback
-                            , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60 * 60);
+                            , TaskPriority.DEFAULT_PRIORITY, 60 * 60);
         if (i - 1 >= 0) {
             params = new HashMap<String, Object>();
             params.put("index", i - 1);
             imageManager.dispatchImageTask(mUrls.get(i - 1), params, mCallback
-                , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60 * 60);
+                , TaskPriority.DEFAULT_PRIORITY, 60 * 60);
         }
         if (i + 1 < mUrls.size()) {
             params = new HashMap<String, Object>();
             params.put("index", i + 1);
             imageManager.dispatchImageTask(mUrls.get(i + 1), params, mCallback
-                , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60 * 60);
+                , TaskPriority.DEFAULT_PRIORITY, 60 * 60);
         }
 
         return view;

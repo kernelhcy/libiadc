@@ -1,6 +1,7 @@
 package com.tsoftime;
 
 import android.graphics.Bitmap;
+import com.tsoftime.messeage.params.TaskPriority;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,36 +14,6 @@ import java.util.HashMap;
  */
 class ImageTask
 {
-    // the priority
-    public enum TaskPriority{
-        LOW_PRIORITY            // low priority
-            {
-                @Override
-                public String toString()
-                {
-                    return "LowPriority";
-                }
-            },
-        DEFAULT_PRIORITY        // default priority
-            {
-                @Override
-                public String toString()
-                {
-                    return "DefaultPriority";
-                }
-            },
-        HIGH_PRIORITY           // high priority
-            {
-                @Override
-                public String toString()
-                {
-                    return "HighPriority";
-                }
-            };
-
-        public abstract String toString();
-    }
-
     public ImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
                     , TaskPriority priority, long expire)
     {

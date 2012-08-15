@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.Message;
 import android.util.Log;
 import com.tsoftime.cache.ImageCacheManager;
+import com.tsoftime.messeage.params.TaskPriority;
 
 import java.util.HashMap;
 import java.util.PriorityQueue;
@@ -63,7 +64,7 @@ public class ImageManager
      *                      copy from the remote server.
      */
     public void dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
-        , ImageTask.TaskPriority priority, long expireTime)
+        , TaskPriority priority, long expireTime)
     {
         if (url == null) {
             callBack.onDownloadingDone(NO_SUCH_IMAGE, null, params);
@@ -107,7 +108,7 @@ public class ImageManager
      */
     public void dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack)
     {
-        dispatchImageTask(url, params, callBack, ImageTask.TaskPriority.DEFAULT_PRIORITY, Long.MAX_VALUE);
+        dispatchImageTask(url, params, callBack, TaskPriority.DEFAULT_PRIORITY, Long.MAX_VALUE);
     }
 
     /**
@@ -132,7 +133,7 @@ public class ImageManager
      * @param priority
      * @return
      */
-    private ImageTask findSameTask(String url, ImageTask.TaskPriority priority)
+    private ImageTask findSameTask(String url, TaskPriority priority)
     {
         ImageTask task = newTasksQueues.findTask(url, priority);
         if (task == null) {

@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.widget.*;
+import com.tsoftime.messeage.params.TaskPriority;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -111,7 +112,7 @@ public class ImageListViewAdaper extends BaseAdapter
         HashMap<String, Object> params = new HashMap<String, Object>();
         params.put("index", i);
         imageManager.dispatchImageTask(urls.get(i), params, callBack
-                                    , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60 * 60);
+                                    , TaskPriority.DEFAULT_PRIORITY, 60 * 60);
 
         return view;
     }
@@ -127,7 +128,7 @@ public class ImageListViewAdaper extends BaseAdapter
         HashMap<String, Object> params = new HashMap<String, Object>();
         params.put("index", index);
         imageManager.dispatchImageTask(urls.get(index), params, callBack
-                                            , ImageTask.TaskPriority.DEFAULT_PRIORITY, 60 * 60);
+                                            , TaskPriority.DEFAULT_PRIORITY, 60 * 60);
     }
 
     private ArrayList<String> urls;

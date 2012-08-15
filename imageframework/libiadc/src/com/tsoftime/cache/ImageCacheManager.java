@@ -110,7 +110,7 @@ public class ImageCacheManager
             Log.d(TAG, String.format("image %s expire time exceed : %d", url, timeHasGone));
             // remove the old cach image.
             // if (imageFile.exists()) imageFile.delete();
-            cache.remove(url);
+            //cache.remove(url);
             return null;
         }
 
@@ -152,13 +152,13 @@ public class ImageCacheManager
      */
     public void saveToCache(String url, Bitmap bmp)
     {
-        if (url == null || bmp == null) return;
-        Log.d(TAG, String.format("cache bmp %s", url));
-        SoftReference<Bitmap> ref = new SoftReference<Bitmap>(bmp);
-        // remove the old cache
-        if (cache.get(url) != null) cache.remove(url);
-        // cache it
-        cache.put(url, ref);
+//        if (url == null || bmp == null) return;
+//        Log.d(TAG, String.format("cache bmp %s", url));
+//        SoftReference<Bitmap> ref = new SoftReference<Bitmap>(bmp);
+//        // remove the old cache
+//        if (cache.get(url) != null) cache.remove(url);
+//        // cache it
+//        cache.put(url, ref);
     }
 
     private Context context;
