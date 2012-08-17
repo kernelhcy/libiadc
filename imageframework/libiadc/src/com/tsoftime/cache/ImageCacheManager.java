@@ -1,17 +1,18 @@
 package com.tsoftime.cache;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.support.v4.util.LruCache;
 import android.util.Log;
 import com.tsoftime.ImageMangerConfig;
-import com.tsoftime.ImageQuality;
 
 import java.io.File;
-import java.lang.ref.SoftReference;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 
 /**
  * The image cache manager.
@@ -23,8 +24,22 @@ public class ImageCacheManager
     private ImageCacheManager(Context ctx)
     {
         context = ctx;
-        cache = new HashMap<String, SoftReference<Bitmap>>();
-        filePathCache = new HashMap<String, String>();
+        //cache = new HashMap<String, SoftReference<Bitmap>>();
+        mFilePathCache = new HashMap<String, String>();
+
+        // Get memory class of this device, exceeding this amount will throw an
+        // OutOfMemory exception.
+        final int memClass = ((ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE)).getMemoryClass();
+        Log.d(TAG, String.format("Max memory %dm", memClass));
+        // Use 1/2th of the available memory for this memory cache.
+        final int cacheSize = 1024 * 1024 * memClass / 4;
+        mMemCache  = new LruCache<String, Bitmap>(cacheSize) {
+            @Override
+            protected int sizeOf(String key, Bitmap bitmap) {
+                // The cache size will be measured in bytes rather than number of items.
+                return bitmap.getRowBytes() * bitmap.getHeight();
+            }
+        };
     }
 
     /**
@@ -55,7 +70,7 @@ public class ImageCacheManager
     public String getImageFilePath(String url)
     {
         // find from the cache
-        String filePath = filePathCache.get(url);
+        String filePath = mFilePathCache.get(url);
         if (filePath != null) return filePath;
 
         // generate the file path
@@ -77,7 +92,7 @@ public class ImageCacheManager
             path.append('/').append(sb.charAt(2));
             path.append('/').append(sb.substring(3, sb.length()));
             filePath = path.toString();
-            filePathCache.put(url, filePath);
+            mFilePathCache.put(url, filePath);
             return filePath;
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -86,52 +101,31 @@ public class ImageCacheManager
     }
 
     /**
-     * Get the image from the file system cache.
+     * Is the image cached in the file system.
      *
      * NOTE:
      *  This method is called in the download thread!
      *
-     * @param url   the url of the image
-     * @param expire the expire time of this image
-     * @return      the bitmap of the image or null for error or not found.
+     * @param url       the url of the image
+     * @param expire    the expire time of this image
+     * @return
      */
-    public Bitmap getImageFromFileSystemCache(String url, long expire, String imageQuality)
+    public boolean isCachedInFileSystem(String url, long expire)
     {
         String filePath = getImageFilePath(url);
-        if (filePath == null) return null;
+        if (filePath == null) return false;
 
         File imageFile = new File(filePath);
-        if (!imageFile.exists()) return null;
+        if (!imageFile.exists()) return false;
 
         // test whether the image cache expire time exceeded
         Date now = Calendar.getInstance().getTime();
         long timeHasGone = (now.getTime() - imageFile.lastModified()) / 1000;
         // the expire time has exceeded, return null to reload download the image.
         if (timeHasGone > expire) {
-            Log.d(TAG, String.format("image %s expire time exceed : %d", url, timeHasGone));
-            // remove the old cach image.
-            // if (imageFile.exists()) imageFile.delete();
-            //cache.remove(url);
-            return null;
+            return false;
         }
-
-        Log.d(TAG, String.format("%s: %s", url, filePath));
-
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = 1;
-
-        if (imageQuality.equals(ImageQuality.QUALITY_MEDIUM.toString())) {
-            options.inSampleSize = 2;
-        } else if (imageQuality.equals(ImageQuality.QUALITY_LOW.toString())) {
-            options.inSampleSize = 4;
-        }
-
-        Bitmap bmp = BitmapFactory.decodeFile(filePath, options);
-
-        if (bmp == null){
-            Log.d(TAG, String.format("Image decode failed : %s", filePath));
-        }
-        return bmp;
+        return true;
     }
 
     /**
@@ -142,17 +136,8 @@ public class ImageCacheManager
      */
     public Bitmap getImageFromCache(String url)
     {
-        // Get the image from the bitmap cache
-        // If the bitmap has recycled by the gc. Get it from the file cache.
-        SoftReference<Bitmap> ref = cache.get(url);
-        if (ref != null) {
-            if (ref.get() == null) {
-                cache.remove(url);
-            } else {
-                return ref.get();
-            }
-        }
-        return null;
+        Log.d(TAG, String.format("Get image from cache: %s", url));
+        return mMemCache.get(url);
     }
 
     /**
@@ -164,21 +149,13 @@ public class ImageCacheManager
     public void saveToCache(String url, Bitmap bmp)
     {
         if (url == null || bmp == null) return;
-        Log.d(TAG, String.format("cache bmp %s", url));
-        SoftReference<Bitmap> ref = new SoftReference<Bitmap>(bmp);
-        // remove the old cache
-        if (cache.get(url) != null) cache.remove(url);
-        // cache it
-        cache.put(url, ref);
+        mMemCache.put(url, bmp);
     }
 
     private Context context;
     private static final String TAG = ImageCacheManager.class.getSimpleName();
 
-    /*
-     * Save the soft references of the bitmaps.
-     */
-    private HashMap<String, SoftReference<Bitmap>> cache;
-    private HashMap<String, String> filePathCache;
+    private HashMap<String, String> mFilePathCache;
     private static ImageCacheManager mInstance = null;
+    private LruCache<String, Bitmap> mMemCache;
 }

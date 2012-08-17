@@ -18,11 +18,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
- * The image downloading thread handler
+ * The image downloading mThread handler
  * All the downloading work is in this class.
  *
  * <p>
- * The image download thread can receive the following types of messages:
+ * The image download mThread can receive the following types of messages:
  * <ol>
  *     <li>
  *         <b>DOWNLOAD_IMAGE</b>: Download an image. This message need two parameters, the parameters are stored in
@@ -33,7 +33,7 @@ import java.net.URL;
  *         </ul>
  *     </li>
  *     <li>
- *         <b>QUIT</b>: Tell the download thread to quit. When the download thread receive this message, it will
+ *         <b>QUIT</b>: Tell the download mThread to quit. When the download mThread receive this message, it will
  *         download all the left images and than quit.
  *     </li>
  * </ol>
@@ -49,15 +49,15 @@ class ImageDownloadThreadHandler extends Handler
 
     public ImageDownloadThreadHandler(ImageDownloadThread thread, ImageManagerHandler handler)
     {
-        this.thread = thread;
-        this.imageManagerHandler = handler;
-        this.imageCacheManager = ImageCacheManager.getInstance();
+        this.mThread = thread;
+        this.mImageManagerHandler = handler;
+        this.mImageCacheManager = ImageCacheManager.getInstance();
     }
 
     /**
      * Handler the message.
      *
-     * The image manager send a DOWNLOAD_IMAGE message to the download thread to download a image.
+     * The image manager send a DOWNLOAD_IMAGE message to the download mThread to download a image.
      * The parameters are stored in the message's data member. Use msg.getDate() to get the parameters bundle.
      * The parameters contain:
      *      "urlStr"            => the urlStr of the image.
@@ -72,12 +72,12 @@ class ImageDownloadThreadHandler extends Handler
         switch (msg.what)
         {
             case DOWNLOAD_IMAGE:
-                dealTheDownloadMessage(msg);
+                handleTheDownloadMessage(msg);
                 break;
             case QUIT:
-                resultMsg = imageManagerHandler.obtainMessage(ImageManagerHandler.THREAD_QUITED);
+                resultMsg = mImageManagerHandler.obtainMessage(ImageManagerHandler.THREAD_QUITED);
                 resultMsg.obj = new ThreadQuitedParams(getLooper().getThread().getName());
-                imageManagerHandler.sendMessage(resultMsg);
+                mImageManagerHandler.sendMessage(resultMsg);
                 getLooper().quit();
                 return;
             default:
@@ -91,7 +91,7 @@ class ImageDownloadThreadHandler extends Handler
      * Download the image...
      * @param msg
      */
-    private void dealTheDownloadMessage(Message msg)
+    private void handleTheDownloadMessage(Message msg)
     {
         Bundle params = msg.getData();
         if (params == null) {
@@ -99,23 +99,15 @@ class ImageDownloadThreadHandler extends Handler
             return;
         }
         String imageQuality = params.getString("image_quality");
-        urlStr = params.getString("url");
-        String filePath = ImageCacheManager.getInstance().getImageFilePath(urlStr);
-        Log.d(TAG, String.format("%s downloads %s, store in %s", getLooper().getThread().getName(), urlStr, filePath));
+        mUrlStr = params.getString("url");
+        String filePath = ImageCacheManager.getInstance().getImageFilePath(mUrlStr);
+        Log.d(TAG, String.format("%s downloads %s, store in %s", getLooper().getThread().getName(), mUrlStr, filePath));
 
         // find the image from the cache.
-        Bitmap bmp = imageCacheManager.getImageFromFileSystemCache(urlStr
-                                                        , params.getLong("expire", Long.MAX_VALUE)
-                                                        , imageQuality);
-        if (bmp != null) {
-            File imageFile = new File(filePath);
-            sendDownloadingProgress((int)imageFile.length(), (int)imageFile.length());
-            sendDownloadDown(bmp, filePath);
-            return;
-        }
-
+        boolean cachedInFileSystem = mImageCacheManager.isCachedInFileSystem(mUrlStr
+                                                                , params.getLong("expire", Long.MAX_VALUE));
         // try to download the image...
-        if (!downloadImage(filePath)) return;
+        if (!cachedInFileSystem && !downloadImage(filePath)) return;
 
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = 1;
@@ -145,12 +137,12 @@ class ImageDownloadThreadHandler extends Handler
     {
         int total = 0, hasRead = 0;
         try {
-            URL url = new URL(urlStr);
+            URL url = new URL(mUrlStr);
             File outFile = new File(filePath);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             int responseCode = connection.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-                sendNoSuchImage(urlStr);
+                sendNoSuchImage(mUrlStr);
                 return false;
             }else if (responseCode != HttpURLConnection.HTTP_OK) {
                 sendError(-1, String.format("Http error %d %s", responseCode, connection.getResponseMessage()));
@@ -201,12 +193,12 @@ class ImageDownloadThreadHandler extends Handler
     private void sendNoSuchImage(String url)
     {
         Message msg;
-        msg = imageManagerHandler.obtainMessage(ImageManagerHandler.NO_SUCH_IMAGE);
+        msg = mImageManagerHandler.obtainMessage(ImageManagerHandler.NO_SUCH_IMAGE);
         NoSuchImageParams params = new NoSuchImageParams();
         params.threadName = getLooper().getThread().getName();
-        params.url = urlStr;
+        params.url = mUrlStr;
         msg.obj = params;
-        imageManagerHandler.sendMessage(msg);
+        mImageManagerHandler.sendMessage(msg);
     }
 
     /**
@@ -217,14 +209,14 @@ class ImageDownloadThreadHandler extends Handler
     private void sendDownloadDown(Bitmap image, String path)
     {
         Message msg;
-        msg = imageManagerHandler.obtainMessage(ImageManagerHandler.DOWNLOAD_DONE);
+        msg = mImageManagerHandler.obtainMessage(ImageManagerHandler.DOWNLOAD_DONE);
         ImageDownloadDoneParams params = new ImageDownloadDoneParams();
         params.threadName = getLooper().getThread().getName();
-        params.url = urlStr;
+        params.url = mUrlStr;
         params.bmp = image;
         params.path = path;
         msg.obj = params;
-        imageManagerHandler.sendMessage(msg);
+        mImageManagerHandler.sendMessage(msg);
     }
 
     /**
@@ -235,14 +227,14 @@ class ImageDownloadThreadHandler extends Handler
     private void sendDownloadingProgress(int total, int hasRead)
     {
         Message msg;
-        msg = imageManagerHandler.obtainMessage(ImageManagerHandler.DOWNLOADING_PROGRESS);
+        msg = mImageManagerHandler.obtainMessage(ImageManagerHandler.DOWNLOADING_PROGRESS);
         DownloadingProgressParams params = new DownloadingProgressParams();
         params.threadName = getLooper().getThread().getName();
         params.total = total;
         params.hasRead = hasRead;
-        params.url = urlStr;
+        params.url = mUrlStr;
         msg.obj = params;
-        imageManagerHandler.sendMessage(msg);
+        mImageManagerHandler.sendMessage(msg);
     }
 
     /**
@@ -253,18 +245,18 @@ class ImageDownloadThreadHandler extends Handler
     private void sendError(int code, String desc)
     {
         Message msg;
-        msg = imageManagerHandler.obtainMessage(ImageManagerHandler.ERROR);
+        msg = mImageManagerHandler.obtainMessage(ImageManagerHandler.ERROR);
         ErrorParams params = new ErrorParams();
         params.threadName = getLooper().getThread().getName();
         params.code = code;
         params.desc = desc;
         msg.obj = params;
-        imageManagerHandler.sendMessage(msg);
+        mImageManagerHandler.sendMessage(msg);
     }
 
-    private String urlStr;
-    private ImageCacheManager imageCacheManager;
-    private ImageDownloadThread thread;
-    private ImageManagerHandler imageManagerHandler;
+    private String mUrlStr;
+    private ImageCacheManager mImageCacheManager;
+    private ImageDownloadThread mThread;
+    private ImageManagerHandler mImageManagerHandler;
     private static final String TAG = ImageDownloadThreadHandler.class.getSimpleName();
 }

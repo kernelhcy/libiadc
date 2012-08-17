@@ -37,8 +37,8 @@ public class ImageManager
      */
     public static void init(Context context)
     {
-        mInstance = new ImageManager(context);
         ImageCacheManager.init(context);
+        mInstance = new ImageManager(context);
     }
 
     /**
