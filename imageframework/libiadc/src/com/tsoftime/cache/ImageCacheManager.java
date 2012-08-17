@@ -29,10 +29,14 @@ public class ImageCacheManager
 
         // Get memory class of this device, exceeding this amount will throw an
         // OutOfMemory exception.
-        final int memClass = ((ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE)).getMemoryClass();
+        int memClass = ((ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE)).getMemoryClass();
         Log.d(TAG, String.format("Max memory %dm", memClass));
-        // Use 1/2th of the available memory for this memory cache.
-        final int cacheSize = 1024 * 1024 * memClass / 4;
+        // Use 1/6th of the available memory for this memory cache.
+        int cacheSize = 1024 * 1024 * memClass / 6;
+        if (ImageMangerConfig.instance().getmMaxMemCacheSize() > 0) {
+            // Use the configuration
+            cacheSize = 1024 * 1024 * ImageMangerConfig.instance().getmMaxMemCacheSize();
+        }
         mMemCache  = new LruCache<String, Bitmap>(cacheSize) {
             @Override
             protected int sizeOf(String key, Bitmap bitmap) {

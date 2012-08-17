@@ -6,15 +6,9 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.GestureDetector;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.TranslateAnimation;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.ListView;
 import android.widget.TextView;
 import com.tsoftime.libjsonet.JSONNet;
 import com.tsoftime.libjsonet.OnExecuteDoneCallback;
@@ -23,7 +17,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.HttpURLConnection;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -40,6 +33,7 @@ public class DemoActivity extends Activity
         setContentView(R.layout.main);
 
         // 初始化ImageManager。
+        ImageMangerConfig.instance().setMaxMemCacheSize(5);
         ImageManager.init(getApplicationContext());
         //ImageManager.instance().setDownloadThreadNumber(2);
 
