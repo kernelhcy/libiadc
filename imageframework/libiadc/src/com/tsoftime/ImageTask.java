@@ -15,19 +15,19 @@ import java.util.HashMap;
 class ImageTask
 {
     public ImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
-                    , TaskPriority priority, long expire, ImageQuality imageQuality)
+                    , TaskPriority priority, long expire, int maxSize)
     {
-        this.url = url;
-        this.callBacks = new ArrayList<TaskParamsPair>();
-        this.callBacks.add(new TaskParamsPair(callBack, params));
-        this.priority = priority;
-        this.expire = expire;
-        this.imageQuality = imageQuality;
+        this.mUrl = url;
+        this.mCallBacks = new ArrayList<TaskParamsPair>();
+        this.mCallBacks.add(new TaskParamsPair(callBack, params));
+        this.mPriority = priority;
+        this.mExpire = expire;
+        this.mMaxSize = maxSize;
     }
 
-    public ImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack, ImageQuality imageQuality)
+    public ImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack, int maxSize)
     {
-        this(url, params, callBack, TaskPriority.DEFAULT_PRIORITY, Long.MAX_VALUE, imageQuality);
+        this(url, params, callBack, TaskPriority.DEFAULT_PRIORITY, Long.MAX_VALUE, maxSize);
     }
 
     /**
@@ -37,10 +37,10 @@ class ImageTask
      */
     public void onDownloadingProgress(int total, int hasRead)
     {
-        this.total = total;
-        this.hasRead = hasRead;
-        for (TaskParamsPair tpp : callBacks) {
-            tpp.callBack.onGettingProgress(total, hasRead, tpp.params);
+        this.mTotal = total;
+        this.mHasRead = hasRead;
+        for (TaskParamsPair tpp : mCallBacks) {
+            tpp.mCallBack.onGettingProgress(total, hasRead, tpp.mParams);
         }
     }
 
@@ -51,92 +51,92 @@ class ImageTask
      */
     public void onDownloadingDone(int status, Bitmap bmp)
     {
-        for (TaskParamsPair tpp : callBacks) {
-            tpp.callBack.onDownloadingDone(status, bmp, tpp.params);
+        for (TaskParamsPair tpp : mCallBacks) {
+            tpp.mCallBack.onDownloadingDone(status, bmp, tpp.mParams);
         }
     }
 
     public void addCallBack(ImageTaskCallBack callBack, HashMap<String, Object> params)
     {
-        this.callBacks.add(new TaskParamsPair(callBack, params));
+        this.mCallBacks.add(new TaskParamsPair(callBack, params));
     }
 
     public String getUrl()
     {
-        return url;
+        return mUrl;
     }
 
-    public void setUrl(String url)
+    public void setUrl(String mUrl)
     {
-        this.url = url;
+        this.mUrl = mUrl;
     }
 
     public long getTotal()
     {
-        return total;
+        return mTotal;
     }
 
-    public void setTotal(long total)
+    public void setTotal(long mTotal)
     {
-        this.total = total;
+        this.mTotal = mTotal;
     }
 
     public long getHasRead()
     {
-        return hasRead;
+        return mHasRead;
     }
 
     public void setHasRead(long hasRead)
     {
-        this.hasRead = hasRead;
+        this.mHasRead = mHasRead;
     }
 
     public TaskPriority getPriority()
     {
-        return priority;
+        return mPriority;
     }
 
     public void setPriority(TaskPriority priority)
     {
-        this.priority = priority;
+        this.mPriority = mPriority;
     }
 
     public long getExpire()
     {
-        return expire;
+        return mExpire;
     }
 
     public void setExpire(long expire)
     {
-        this.expire = expire;
+        this.mExpire = mExpire;
     }
 
-    public ImageQuality getImageQuality()
+    public int getMaxSize()
     {
-        return imageQuality;
+        return mMaxSize;
     }
 
-    public void setImageQuality(ImageQuality imageQuality)
+    public void setImageQuality(int maxSize)
     {
-        this.imageQuality = imageQuality;
+        this.mMaxSize = maxSize;
     }
 
-    private ArrayList<TaskParamsPair> callBacks;
-    private String url;
-    private long total, hasRead;
-    private TaskPriority priority;
-    private long expire;
-    private ImageQuality imageQuality;
+    private ArrayList<TaskParamsPair> mCallBacks;
+    private String mUrl;
+    private long mTotal, mHasRead;
+    private TaskPriority mPriority;
+    private long mExpire;
+    private int mMaxSize;
 
     private class TaskParamsPair
     {
-        ImageTaskCallBack callBack;
-        HashMap<String, Object> params;
+        ImageTaskCallBack mCallBack;
+        HashMap<String, Object> mParams;
 
         private TaskParamsPair(ImageTaskCallBack callBack, HashMap<String, Object> params)
         {
-            this.callBack = callBack;
-            this.params = params;
+            this.mCallBack = callBack;
+            this.mParams = params;
         }
     }
 }

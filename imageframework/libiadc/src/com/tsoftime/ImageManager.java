@@ -62,10 +62,10 @@ public class ImageManager
      * @param expireTime    the expire time(second). The image will be cached until the expire time exceeds.
      *                      After the expire time exceeds, the image will be removed from the cache and get a new
      *                      copy from the remote server.
-     * @param imageQuality  the quality of the image
+     * @param maxSize       the max size of the image. The image will be scaled and the max (width, height) < maxSize
      */
     public void dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
-        , TaskPriority priority, long expireTime, ImageQuality imageQuality)
+        , TaskPriority priority, long expireTime, int maxSize)
     {
         if (url == null) {
             callBack.onDownloadingDone(NO_SUCH_IMAGE, null, params);
@@ -74,7 +74,7 @@ public class ImageManager
 
         // try to get the image from the cache
         ImageCacheManager cacheManager = ImageCacheManager.getInstance();
-        Bitmap bmp = cacheManager.getImageFromCache(url + imageQuality.toString());
+        Bitmap bmp = cacheManager.getImageFromCache(url + maxSize);
         if (bmp != null) {
             Log.d(TAG, String.format("Cached! %s", url));
             callBack.onGettingProgress(bmp.getWidth() * bmp.getHeight(), bmp.getWidth() * bmp.getHeight(), params);
@@ -93,7 +93,7 @@ public class ImageManager
 
         // create a new task
         Log.d(TAG, String.format("get image %s %s", url, priority.toString()));
-        task = new ImageTask(url, params, callBack, priority, expireTime, imageQuality);
+        task = new ImageTask(url, params, callBack, priority, expireTime, maxSize);
         newTasksQueues.enqueue(task);
 
         // run the tasks.
@@ -106,12 +106,12 @@ public class ImageManager
      * @param url       the url of the image. like : "http://www.google.com/images/1.png"
      * @param params    the parameters you want to receive in the ImageTaskCallBack callbacks.
      * @param callBack  the callback. Used to notify you the progress.
-     * @param imageQuality  the quality of the image
+     * @param maxSize       the max size of the image. The image will be scaled and the max (width, height) < maxSize
      */
     public void dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
-                                        , ImageQuality imageQuality)
+                                        , int maxSize)
     {
-        dispatchImageTask(url, params, callBack, TaskPriority.DEFAULT_PRIORITY, Long.MAX_VALUE, imageQuality);
+        dispatchImageTask(url, params, callBack, TaskPriority.DEFAULT_PRIORITY, Long.MAX_VALUE, maxSize);
     }
 
     /**
@@ -171,7 +171,7 @@ public class ImageManager
                 Bundle bundle = new Bundle();
                 bundle.putString("url", task.getUrl());
                 bundle.putLong("expire", task.getExpire());
-                bundle.putString("image_quality", task.getImageQuality().toString());
+                bundle.putInt("max_size", task.getMaxSize());
                 msg.setData(bundle);
                 t.getHandler().sendMessage(msg);
                 runningTasksMap.put(task.getUrl(), task);
@@ -291,7 +291,7 @@ public class ImageManager
             // save the cache
             Log.d(TAG, String.format("Cache bitmap, %s", url));
             ImageCacheManager cacheManager = ImageCacheManager.getInstance();
-            cacheManager.saveToCache(url + task.getImageQuality().toString(), bmp);
+            cacheManager.saveToCache(url + task.getMaxSize(), bmp);
         }
     }
 

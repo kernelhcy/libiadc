@@ -9,10 +9,7 @@ import android.util.Log;
 import com.tsoftime.cache.ImageCacheManager;
 import com.tsoftime.messeage.params.*;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -98,7 +95,7 @@ class ImageDownloadThreadHandler extends Handler
             sendError(-1, "msg.getData() == null");
             return;
         }
-        String imageQuality = params.getString("image_quality");
+        int maxSize = params.getInt("max_size", Integer.MAX_VALUE);
         mUrlStr = params.getString("url");
         String filePath = ImageCacheManager.getInstance().getImageFilePath(mUrlStr);
         Log.d(TAG, String.format("%s downloads %s, store in %s", getLooper().getThread().getName(), mUrlStr, filePath));
@@ -110,13 +107,8 @@ class ImageDownloadThreadHandler extends Handler
         if (!cachedInFileSystem && !downloadImage(filePath)) return;
 
         final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = 1;
+        options.inSampleSize = computeSampleSize(filePath, maxSize);
 
-        if (imageQuality.equals(ImageQuality.QUALITY_MEDIUM.toString())) {
-            options.inSampleSize = 2;
-        } else if (imageQuality.equals(ImageQuality.QUALITY_LOW.toString())) {
-            options.inSampleSize = 4;
-        }
 
         Bitmap image = BitmapFactory.decodeFile(filePath, options);
 
@@ -126,6 +118,34 @@ class ImageDownloadThreadHandler extends Handler
         }
 
         sendDownloadDown(image, filePath);
+    }
+
+    /**
+     * Compute the sample size.
+     *
+     * @param filePath
+     * @param maxSize
+     * @return
+     */
+    private int computeSampleSize(String filePath, int maxSize)
+    {
+        int sampleSize = 1;
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        try {
+            BitmapFactory.decodeStream(new FileInputStream(new File(filePath)), null, o);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return sampleSize;
+        }
+
+        // 计算压缩率
+        while (o.outWidth / sampleSize / 2 >= maxSize &&
+                        o.outHeight / sampleSize / 2 >= maxSize){
+            sampleSize *= 2;
+        }
+
+        return sampleSize;
     }
 
     /**
