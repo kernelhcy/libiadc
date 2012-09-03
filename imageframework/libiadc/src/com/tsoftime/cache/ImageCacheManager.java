@@ -141,7 +141,8 @@ public class ImageCacheManager
     public Bitmap getImageFromCache(String url)
     {
         Log.d(TAG, String.format("Get image from cache: %s", url));
-        return mMemCache.get(url);
+        //return mMemCache.get(url);
+        return null;
     }
 
     /**
@@ -153,7 +154,7 @@ public class ImageCacheManager
     public void saveToCache(String url, Bitmap bmp)
     {
         if (url == null || bmp == null) return;
-        mMemCache.put(url, bmp);
+        //mMemCache.put(url, bmp);
     }
 
     private Context context;

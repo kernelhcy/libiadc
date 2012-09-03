@@ -66,6 +66,7 @@ class ImageDownloadThreadHandler extends Handler
     public void handleMessage(Message msg)
     {
         Message resultMsg;
+        mThread.setStatus(ImageDownloadThread.RUNNING_STATUS);
         switch (msg.what)
         {
             case DOWNLOAD_IMAGE:
@@ -81,7 +82,7 @@ class ImageDownloadThreadHandler extends Handler
                 sendError(-1, String.format("Unknown message type : %d", msg.what));
                 break;
         }
-
+        mThread.setStatus(ImageDownloadThread.IDLE_STATUS);
     }
 
     /**
@@ -140,11 +141,11 @@ class ImageDownloadThreadHandler extends Handler
         }
 
         // 计算压缩率
-        while (o.outWidth / sampleSize / 2 >= maxSize &&
-                        o.outHeight / sampleSize / 2 >= maxSize){
-            sampleSize *= 2;
-        }
-
+//        while (o.outWidth / sampleSize / 2 >= maxSize &&
+//                        o.outHeight / sampleSize / 2 >= maxSize){
+//            sampleSize *= 2;
+//        }
+        sampleSize = (int) ((float)(Math.max(o.outHeight, o.outWidth)) / (float)maxSize);
         return sampleSize;
     }
 

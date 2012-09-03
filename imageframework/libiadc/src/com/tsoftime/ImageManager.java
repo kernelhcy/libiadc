@@ -164,7 +164,6 @@ public class ImageManager
         {
             if (newTasksQueues.size() <= 0) break;
             if (t.getStatus() == ImageDownloadThread.IDLE_STATUS) {
-                t.setStatus(ImageDownloadThread.RUNNING_STATUS);
                 ImageTask task = newTasksQueues.dequeue();
                 if(task == null) break;     // no more task.
                 Message msg = t.getHandler().obtainMessage(ImageDownloadThreadHandler.DOWNLOAD_IMAGE);
