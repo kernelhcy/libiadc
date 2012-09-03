@@ -82,7 +82,6 @@ class ImageDownloadThreadHandler extends Handler
                 sendError(-1, String.format("Unknown message type : %d", msg.what));
                 break;
         }
-        mThread.setStatus(ImageDownloadThread.IDLE_STATUS);
     }
 
     /**
@@ -219,6 +218,7 @@ class ImageDownloadThreadHandler extends Handler
         params.threadName = getLooper().getThread().getName();
         params.url = mUrlStr;
         msg.obj = params;
+        mThread.setStatus(ImageDownloadThread.IDLE_STATUS);
         mImageManagerHandler.sendMessage(msg);
     }
 
@@ -237,6 +237,7 @@ class ImageDownloadThreadHandler extends Handler
         params.bmp = image;
         params.path = path;
         msg.obj = params;
+        mThread.setStatus(ImageDownloadThread.IDLE_STATUS);
         mImageManagerHandler.sendMessage(msg);
     }
 
@@ -272,6 +273,7 @@ class ImageDownloadThreadHandler extends Handler
         params.code = code;
         params.desc = desc;
         msg.obj = params;
+        mThread.setStatus(ImageDownloadThread.IDLE_STATUS);
         mImageManagerHandler.sendMessage(msg);
     }
 
