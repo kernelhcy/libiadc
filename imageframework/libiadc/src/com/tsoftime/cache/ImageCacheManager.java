@@ -69,7 +69,7 @@ public class ImageCacheManager
      * If the md5 value of the url is '5d41402abc4b2a76b9719d911017c592', the file path will be
      * /5/d/4/1402abc4b2a76b9719d911017c592.
      * @param url
-     * @return
+     * @return if the storage is not available, null will be returned;
      */
     public String getImageFilePath(String url)
     {
@@ -89,6 +89,10 @@ public class ImageCacheManager
             // create the path
             StringBuilder path = new StringBuilder();
             File externalCacheDir = context.getExternalCacheDir();
+            if (externalCacheDir == null) {
+                externalCacheDir = context.getCacheDir();
+                if (externalCacheDir == null) return null;
+            }
             path.append(externalCacheDir.getAbsolutePath());                // external cache dir
             path.append(ImageMangerConfig.instance().getImageStoreDir());   // image cache dir
             path.append('/').append(sb.charAt(0));

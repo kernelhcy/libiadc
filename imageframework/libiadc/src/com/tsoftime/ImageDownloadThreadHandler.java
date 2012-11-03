@@ -98,7 +98,12 @@ class ImageDownloadThreadHandler extends Handler
         int maxSize = params.getInt("max_size", Integer.MAX_VALUE);
         mUrlStr = params.getString("url");
         String filePath = ImageCacheManager.getInstance().getImageFilePath(mUrlStr);
-        Log.d(TAG, String.format("%s downloads %s, store in %s", getLooper().getThread().getName(), mUrlStr, filePath));
+        if (filePath != null) {
+            Log.d(TAG, String.format("%s downloads %s, store in %s",
+                                        getLooper().getThread().getName(), mUrlStr, filePath));
+        } else {
+            sendError(-1, "No storage");
+        }
 
         // find the image from the cache.
         boolean cachedInFileSystem = mImageCacheManager.isCachedInFileSystem(mUrlStr
