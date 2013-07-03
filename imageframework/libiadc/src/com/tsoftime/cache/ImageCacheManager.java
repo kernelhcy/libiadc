@@ -3,7 +3,6 @@ package com.tsoftime.cache;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.support.v4.util.LruCache;
 import android.util.Log;
 import com.tsoftime.ImageMangerConfig;
 
@@ -26,24 +25,6 @@ public class ImageCacheManager
         context = ctx;
         //cache = new HashMap<String, SoftReference<Bitmap>>();
         mFilePathCache = new HashMap<String, String>();
-
-        // Get memory class of this device, exceeding this amount will throw an
-        // OutOfMemory exception.
-        int memClass = ((ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE)).getMemoryClass();
-        Log.d(TAG, String.format("Max memory %dm", memClass));
-        // Use 1/6th of the available memory for this memory cache.
-        int cacheSize = 1024 * 1024 * memClass / 6;
-        if (ImageMangerConfig.instance().getmMaxMemCacheSize() > 0) {
-            // Use the configuration
-            cacheSize = 1024 * 1024 * ImageMangerConfig.instance().getmMaxMemCacheSize();
-        }
-        mMemCache  = new LruCache<String, Bitmap>(cacheSize) {
-            @Override
-            protected int sizeOf(String key, Bitmap bitmap) {
-                // The cache size will be measured in bytes rather than number of items.
-                return bitmap.getRowBytes() * bitmap.getHeight();
-            }
-        };
     }
 
     /**
@@ -136,35 +117,9 @@ public class ImageCacheManager
         return true;
     }
 
-    /**
-     * Get the image from the cache
-     *
-     * @param url the url of the image
-     * @return if found, return the image or null.
-     */
-    public Bitmap getImageFromCache(String url)
-    {
-        Log.d(TAG, String.format("Get image from cache: %s", url));
-        //return mMemCache.get(url);
-        return null;
-    }
-
-    /**
-     * save the bitmap to cache.
-     *
-     * @param url the url of the image
-     * @param bmp the bitmap
-     */
-    public void saveToCache(String url, Bitmap bmp)
-    {
-        if (url == null || bmp == null) return;
-        //mMemCache.put(url, bmp);
-    }
-
     private Context context;
     private static final String TAG = ImageCacheManager.class.getSimpleName();
 
     private HashMap<String, String> mFilePathCache;
     private static ImageCacheManager mInstance = null;
-    private LruCache<String, Bitmap> mMemCache;
 }
