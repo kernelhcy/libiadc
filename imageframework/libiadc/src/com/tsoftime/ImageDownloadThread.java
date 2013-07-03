@@ -43,7 +43,7 @@ class ImageDownloadThread extends Thread
      * Get the status of the thread.
      * @return the status
      */
-    public synchronized int getStatus()
+    public int getStatus()
     {
         return status;
     }
@@ -52,7 +52,7 @@ class ImageDownloadThread extends Thread
      * Set the status of the thread.
      * @param status new status.
      */
-    public synchronized void setStatus(int status)
+    public void setStatus(int status)
     {
         this.status = status;
     }

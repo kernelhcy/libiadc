@@ -72,16 +72,6 @@ public class ImageManager
             return;
         }
 
-        // try to get the image from the cache
-        ImageCacheManager cacheManager = ImageCacheManager.getInstance();
-        Bitmap bmp = cacheManager.getImageFromCache(url + imageQuality.toString());
-        if (bmp != null) {
-            Log.d(TAG, String.format("Cached! %s", url));
-            callBack.onGettingProgress(bmp.getWidth() * bmp.getHeight(), bmp.getWidth() * bmp.getHeight(), params);
-            callBack.onDownloadingDone(SUCCESS, bmp, params);
-            return;
-        }
-
         // try to find a same task.
         ImageTask task = findSameTask(url, priority);
         if (task != null) {
@@ -164,6 +154,7 @@ public class ImageManager
         {
             if (newTasksQueues.size() <= 0) break;
             if (t.getStatus() == ImageDownloadThread.IDLE_STATUS) {
+                // only here, the thread can be set to RUNNING
                 t.setStatus(ImageDownloadThread.RUNNING_STATUS);
                 ImageTask task = newTasksQueues.dequeue();
                 if(task == null) break;     // no more task.
@@ -291,7 +282,6 @@ public class ImageManager
             // save the cache
             Log.d(TAG, String.format("Cache bitmap, %s", url));
             ImageCacheManager cacheManager = ImageCacheManager.getInstance();
-            cacheManager.saveToCache(url + task.getImageQuality().toString(), bmp);
         }
     }
 

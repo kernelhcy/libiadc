@@ -78,8 +78,9 @@ class ImageManagerHandler extends Handler
                 break;
             case NO_SUCH_IMAGE:
                 NoSuchImageParams noSuchImageParams = (NoSuchImageParams) msg.obj;
-                Log.d(TAG, String.format("Receive NO_SUCH_IMAGE message. %s", noSuchImageParams.threadName));
-                imageManager.onDownloadDone(ImageManager.NO_SUCH_IMAGE, null, null);
+                Log.d(TAG, String.format("Receive NO_SUCH_IMAGE message. %s. %s", noSuchImageParams.threadName
+                                                                                , noSuchImageParams.url));
+                imageManager.onDownloadDone(ImageManager.NO_SUCH_IMAGE, noSuchImageParams.url, null);
                 imageManager.setThreadStatus(noSuchImageParams.threadName, ImageDownloadThread.IDLE_STATUS);
                 break;
             case ERROR:
