@@ -2,11 +2,9 @@ package com.tsoftime;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.os.Bundle;
 import android.os.Message;
 import android.util.Log;
 import com.tsoftime.cache.ImageCacheManager;
-import com.tsoftime.messeage.params.TaskPriority;
 
 import java.util.HashMap;
 import java.util.PriorityQueue;
@@ -38,7 +36,7 @@ public class ImageManager
     public static void init(Context context)
     {
         ImageCacheManager.init(context);
-        mInstance = new ImageManager(context);
+        mInstance = new ImageManager();
     }
 
     /**
@@ -62,28 +60,18 @@ public class ImageManager
      * @param expireTime    the expire time(second). The image will be cached until the expire time exceeds.
      *                      After the expire time exceeds, the image will be removed from the cache and get a new
      *                      copy from the remote server.
-     * @param maxSize       the max size of the image. The image will be scaled and the max (width, height) < maxSize
      */
     public void dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
-        , TaskPriority priority, long expireTime, int maxSize)
+                                    , TaskPriority priority, long expireTime)
     {
         if (url == null) {
             callBack.onDownloadingDone(NO_SUCH_IMAGE, null, params);
             return;
         }
 
-        // try to find a same task.
-        ImageTask task = findSameTask(url, priority);
-        if (task != null) {
-            task.addCallBack(callBack, params);
-            // run the tasks.
-            runTasks();
-            return;
-        }
-
         // create a new task
         Log.d(TAG, String.format("get image %s %s", url, priority.toString()));
-        task = new ImageTask(url, params, callBack, priority, expireTime, maxSize);
+        ImageTask task = new ImageTask(url, params, callBack, priority, expireTime);
         newTasksQueues.enqueue(task);
 
         // run the tasks.
@@ -96,12 +84,10 @@ public class ImageManager
      * @param url       the url of the image. like : "http://www.google.com/images/1.png"
      * @param params    the parameters you want to receive in the ImageTaskCallBack callbacks.
      * @param callBack  the callback. Used to notify you the progress.
-     * @param maxSize       the max size of the image. The image will be scaled and the max (width, height) < maxSize
      */
-    public void dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
-                                        , int maxSize)
+    public void dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack)
     {
-        dispatchImageTask(url, params, callBack, TaskPriority.DEFAULT_PRIORITY, Long.MAX_VALUE, maxSize);
+        dispatchImageTask(url, params, callBack, TaskPriority.DEFAULT_PRIORITY, Long.MAX_VALUE);
     }
 
     /**
@@ -121,28 +107,6 @@ public class ImageManager
      */
 
     /**
-     * Find the save task from the new tasks queues and the running tasks map.
-     * @param url
-     * @param priority
-     * @return
-     */
-    private ImageTask findSameTask(String url, TaskPriority priority)
-    {
-        ImageTask task = newTasksQueues.findTask(url, priority);
-        if (task == null) {
-            task = runningTasksMap.get(url);
-            if (task != null) {
-                Log.d(TAG, String.format("Got a same task for %s of priority %s from running tasks map!"
-                                            , url, priority.toString()));
-            }
-        } else {
-            Log.d(TAG, String.format("Got a same task for %s of priority %s from new tasks queues!"
-                                            , url, priority.toString()));
-        }
-        return task;
-    }
-
-    /**
      * Find a idle thread and run an image task on it.
      * If no thread is idle, just do nothing.
      * When some download thread is idle, it will send some message to the image manager. When the image manager
@@ -159,26 +123,18 @@ public class ImageManager
                 ImageTask task = newTasksQueues.dequeue();
                 if(task == null) break;     // no more task.
                 Message msg = t.getHandler().obtainMessage(ImageDownloadThreadHandler.DOWNLOAD_IMAGE);
-                Bundle bundle = new Bundle();
-                bundle.putString("url", task.getUrl());
-                bundle.putLong("expire", task.getExpire());
-                bundle.putInt("max_size", task.getMaxSize());
-                msg.setData(bundle);
+                msg.obj = task;
                 t.getHandler().sendMessage(msg);
-                runningTasksMap.put(task.getUrl(), task);
             }
         }
     }
 
     /**
      * You SHOUlD NEVER create an instance by yourself.
-     * @param context
      */
-    private ImageManager(Context context)
+    private ImageManager()
     {
-        this.context = context;
         this.newTasksQueues = new ImageTaskQueues();
-        this.runningTasksMap = new HashMap<String, ImageTask>();
         this.handler = new ImageManagerHandler(this);
 
         this.downloadThreadNumber = 1;
@@ -221,11 +177,12 @@ public class ImageManager
 
         // create new download threads
         for(int i = 0; i < downloadThreadNumber; ++i) {
-            ImageDownloadThread t = new ImageDownloadThread(handler, context);
+            ImageDownloadThread t = new ImageDownloadThread(handler);
             t.setName(String.format("ImageDownloadThread-%d-%d", System.currentTimeMillis(), i));
             PriorityQueue<ImageTask> queue = new PriorityQueue<ImageTask>();
             threads.put(t.getName(), t);
             t.start();
+            t.getLooper();  // wait the thread to start up
         }
     }
 
@@ -255,44 +212,32 @@ public class ImageManager
 
     /**
      * Called by the ImageMangerHandler when it receives DOWNLOADING_PROGRESS message.
-     * @param url       the url of the image, used to find the image task.
+     *
+     * @param task      the image task
      * @param total     the total length
      * @param hasRead   the length has read
      */
-    void onDownloadingProgress(String url, int total, int hasRead)
+    void onDownloadingProgress(ImageTask task, int total, int hasRead)
     {
-        ImageTask task = runningTasksMap.get(url);
         if (task == null) return;
         task.onDownloadingProgress(total, hasRead);
     }
 
     /**
      * Called by the ImageManagerHandler when it received DOWNLOADED_DONE message.
+     *
+     * @param task      the image task
      * @param status    the status
-     * @param url       the url of the image, used to find the image task. When an error occurs, this parameter is
-     *                  the description of this error.
+     * @param bmp       the image
      */
-    void onDownloadDone(int status, String url, Bitmap bmp)
+    void onDownloadDone(ImageTask task, int status, Bitmap bmp)
     {
-        ImageTask task = runningTasksMap.remove(url);
         if (task == null) return;
         task.onDownloadingDone(status, bmp);
-
-        if (status == SUCCESS && bmp != null) {
-            // save the cache
-            Log.d(TAG, String.format("Cache bitmap, %s", url));
-            ImageCacheManager cacheManager = ImageCacheManager.getInstance();
-        }
     }
 
-    Context getContext()
-    {
-        return context;
-    }
 
-    private Context context;
     private ImageTaskQueues newTasksQueues;                         // The new tasks queue.
-    private HashMap<String, ImageTask> runningTasksMap;             // The running tasks map.
 
     private ImageManagerHandler handler;
 

@@ -2,7 +2,6 @@ package com.tsoftime;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -79,7 +78,7 @@ class ImageDownloadThreadHandler extends Handler
                 getLooper().quit();
                 return;
             default:
-                sendError(-1, String.format("Unknown message type : %d", msg.what));
+                sendError(-1, String.format("Unknown message type : %d", msg.what), mCurrTask);
                 break;
         }
     }
@@ -90,67 +89,33 @@ class ImageDownloadThreadHandler extends Handler
      */
     private void handleTheDownloadMessage(Message msg)
     {
-        Bundle params = msg.getData();
-        if (params == null) {
-            sendError(-1, "msg.getData() == null");
+        mCurrTask = (ImageTask) msg.obj;
+        if (mCurrTask == null) {
+            sendError(-1, "msg.obj == null", mCurrTask);
             return;
         }
-        int maxSize = params.getInt("max_size", Integer.MAX_VALUE);
-        mUrlStr = params.getString("url");
-        String filePath = ImageCacheManager.getInstance().getImageFilePath(mUrlStr);
+        String url = mCurrTask.getUrl();
+        String filePath = ImageCacheManager.getInstance().getImageFilePath(url);
         if (filePath != null) {
             Log.d(TAG, String.format("%s downloads %s, store in %s",
-                                        getLooper().getThread().getName(), mUrlStr, filePath));
+                                        getLooper().getThread().getName(), url, filePath));
         } else {
-            sendError(-1, "No storage");
+            sendError(-1, "No storage", mCurrTask);
         }
 
         // find the image from the cache.
-        boolean cachedInFileSystem = mImageCacheManager.isCachedInFileSystem(mUrlStr
-                                                                , params.getLong("expire", Long.MAX_VALUE));
+        boolean cachedInFileSystem = mImageCacheManager.isCachedInFileSystem(url, mCurrTask.getExpire());
         // try to download the image...
         if (!cachedInFileSystem && !downloadImage(filePath)) return;
 
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = computeSampleSize(filePath, maxSize);
-
-
-        Bitmap image = BitmapFactory.decodeFile(filePath, options);
+        Bitmap image = BitmapFactory.decodeFile(filePath);
 
         if (image == null) {
-            sendError(-1, "Deocde image from file error.");
+            sendError(-1, "Deocde image from file error.", mCurrTask);
             return;
         }
 
-        sendDownloadDown(image, filePath);
-    }
-
-    /**
-     * Compute the sample size.
-     *
-     * @param filePath
-     * @param maxSize
-     * @return
-     */
-    private int computeSampleSize(String filePath, int maxSize)
-    {
-        int sampleSize = 1;
-        BitmapFactory.Options o = new BitmapFactory.Options();
-        o.inJustDecodeBounds = true;
-        try {
-            BitmapFactory.decodeStream(new FileInputStream(new File(filePath)), null, o);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return sampleSize;
-        }
-
-        // 计算压缩率
-//        while (o.outWidth / sampleSize / 2 >= maxSize &&
-//                        o.outHeight / sampleSize / 2 >= maxSize){
-//            sampleSize *= 2;
-//        }
-        sampleSize = (int) ((float)(Math.max(o.outHeight, o.outWidth)) / (float)maxSize);
-        return sampleSize;
+        sendDownloadDown(image, filePath, mCurrTask);
     }
 
     /**
@@ -160,17 +125,18 @@ class ImageDownloadThreadHandler extends Handler
      */
     private boolean downloadImage(String filePath)
     {
-        int total = 0, hasRead = 0;
+        int total, hasRead = 0;
         try {
-            URL url = new URL(mUrlStr);
+            URL url = new URL(mCurrTask.getUrl());
             File outFile = new File(filePath);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             int responseCode = connection.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-                sendNoSuchImage(mUrlStr);
+                sendError(-1, "No such file.", mCurrTask);
                 return false;
             }else if (responseCode != HttpURLConnection.HTTP_OK) {
-                sendError(-1, String.format("Http error %d %s", responseCode, connection.getResponseMessage()));
+                sendError(-1, String.format("Http error %d %s", responseCode, connection.getResponseMessage())
+                        , mCurrTask);
                 return false;
             }
 
@@ -194,37 +160,20 @@ class ImageDownloadThreadHandler extends Handler
             while((read = is.read(buf)) != -1) {
                 fos.write(buf, 0, read);
                 hasRead += read;
-                sendDownloadingProgress(total, hasRead);
+                sendDownloadingProgress(total, hasRead, mCurrTask);
             }
             is.close();
             fos.close();
         } catch (MalformedURLException e) {
             e.printStackTrace();
-            sendError(-1, e.getMessage());
+            sendError(-1, e.getMessage(), mCurrTask);
             return false;
         } catch (IOException e) {
             e.printStackTrace();
-            sendError(-1, e.getMessage());
+            sendError(-1, e.getMessage(), mCurrTask);
             return false;
         }
         return true;
-    }
-
-
-    /**
-     * Send no such image message to the image manager.
-     * @param url the url of the image
-     */
-    private void sendNoSuchImage(String url)
-    {
-        Message msg;
-        msg = mImageManagerHandler.obtainMessage(ImageManagerHandler.NO_SUCH_IMAGE);
-        NoSuchImageParams params = new NoSuchImageParams();
-        params.threadName = getLooper().getThread().getName();
-        params.url = mUrlStr;
-        msg.obj = params;
-        mThread.setStatus(ImageDownloadThread.IDLE_STATUS);
-        mImageManagerHandler.sendMessage(msg);
     }
 
     /**
@@ -232,13 +181,13 @@ class ImageDownloadThreadHandler extends Handler
      * @param image the image.
      * @param path the path
      */
-    private void sendDownloadDown(Bitmap image, String path)
+    private void sendDownloadDown(Bitmap image, String path, ImageTask task)
     {
         Message msg;
         msg = mImageManagerHandler.obtainMessage(ImageManagerHandler.DOWNLOAD_DONE);
-        ImageDownloadDoneParams params = new ImageDownloadDoneParams();
+        DownloadDoneParams params = new DownloadDoneParams();
         params.threadName = getLooper().getThread().getName();
-        params.url = mUrlStr;
+        params.task = task;
         params.bmp = image;
         params.path = path;
         msg.obj = params;
@@ -251,7 +200,7 @@ class ImageDownloadThreadHandler extends Handler
      * @param total     the total length
      * @param hasRead   has read length
      */
-    private void sendDownloadingProgress(int total, int hasRead)
+    private void sendDownloadingProgress(int total, int hasRead, ImageTask task)
     {
         Message msg;
         msg = mImageManagerHandler.obtainMessage(ImageManagerHandler.DOWNLOADING_PROGRESS);
@@ -259,7 +208,7 @@ class ImageDownloadThreadHandler extends Handler
         params.threadName = getLooper().getThread().getName();
         params.total = total;
         params.hasRead = hasRead;
-        params.url = mUrlStr;
+        params.task = task;
         msg.obj = params;
         mImageManagerHandler.sendMessage(msg);
     }
@@ -269,7 +218,7 @@ class ImageDownloadThreadHandler extends Handler
      * @param code sendError code
      * @param desc sendError description
      */
-    private void sendError(int code, String desc)
+    private void sendError(int code, String desc, ImageTask task)
     {
         Message msg;
         msg = mImageManagerHandler.obtainMessage(ImageManagerHandler.ERROR);
@@ -277,12 +226,13 @@ class ImageDownloadThreadHandler extends Handler
         params.threadName = getLooper().getThread().getName();
         params.code = code;
         params.desc = desc;
+        params.task = task;
         msg.obj = params;
         mThread.setStatus(ImageDownloadThread.IDLE_STATUS);
         mImageManagerHandler.sendMessage(msg);
     }
 
-    private String mUrlStr;
+    private ImageTask mCurrTask;
     private ImageCacheManager mImageCacheManager;
     private ImageDownloadThread mThread;
     private ImageManagerHandler mImageManagerHandler;

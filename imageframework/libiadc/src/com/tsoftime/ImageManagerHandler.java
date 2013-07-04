@@ -47,7 +47,6 @@ class ImageManagerHandler extends Handler
 {
     public static final int DOWNLOAD_DONE = 1;          // The image has been downloaded.
     public static final int DOWNLOADING_PROGRESS = 2;   // The image is being downloaded. Notify the progress.
-    public static final int NO_SUCH_IMAGE = -2;         // No such image found.
     public static final int ERROR = -1;                 // error occurs.
     public static final int THREAD_QUITED = 3;          // The download thread has quited.
 
@@ -62,38 +61,40 @@ class ImageManagerHandler extends Handler
         switch (msg.what)
         {
             case DOWNLOAD_DONE:
-                ImageDownloadDoneParams imageDownlodDoneParams = (ImageDownloadDoneParams) msg.obj;
-                imageManager.setThreadStatus(imageDownlodDoneParams.threadName, ImageDownloadThread.IDLE_STATUS);
-                Log.d(TAG, String.format("Receive DOWNLOAD_DONE message. %s",imageDownlodDoneParams.threadName));
-                imageManager.onDownloadDone(ImageManager.SUCCESS,
-                                        imageDownlodDoneParams.url, imageDownlodDoneParams.bmp);
+            {
+                DownloadDoneParams params = (DownloadDoneParams) msg.obj;
+                imageManager.setThreadStatus(params.threadName, ImageDownloadThread.IDLE_STATUS);
+                Log.d(TAG, String.format("Receive DOWNLOAD_DONE message. %s. %s", params.threadName
+                                                                                , params.task.getUrl()));
+                imageManager.onDownloadDone(params.task
+                                            , ImageManager.SUCCESS
+                                            , params.bmp);
                 break;
+            }
             case DOWNLOADING_PROGRESS:
-                DownloadingProgressParams downloadingProgressParams = (DownloadingProgressParams) msg.obj;
-//                Log.d(TAG, String.format("Receive DOWNLOADING_PROGRESS message. %s"
-//                                , downloadingProgressParams.threadName));
-                imageManager.onDownloadingProgress(downloadingProgressParams.url
-                                                    , downloadingProgressParams.total
-                                                    , downloadingProgressParams.hasRead);
+            {
+                DownloadingProgressParams params = (DownloadingProgressParams) msg.obj;
+                imageManager.onDownloadingProgress(params.task
+                                                    , params.total
+                                                    , params.hasRead);
                 break;
-            case NO_SUCH_IMAGE:
-                NoSuchImageParams noSuchImageParams = (NoSuchImageParams) msg.obj;
-                Log.d(TAG, String.format("Receive NO_SUCH_IMAGE message. %s. %s", noSuchImageParams.threadName
-                                                                                , noSuchImageParams.url));
-                imageManager.onDownloadDone(ImageManager.NO_SUCH_IMAGE, noSuchImageParams.url, null);
-                imageManager.setThreadStatus(noSuchImageParams.threadName, ImageDownloadThread.IDLE_STATUS);
-                break;
+            }
             case ERROR:
-                ErrorParams errorParams = (ErrorParams) msg.obj;
-                Log.d(TAG, String.format("Receive ERROR message. %s %s", errorParams.threadName, errorParams.desc));
-                imageManager.onDownloadDone(ImageManager.ERROR, errorParams.desc, null);
-                imageManager.setThreadStatus(errorParams.threadName, ImageDownloadThread.IDLE_STATUS);
+            {
+                ErrorParams params = (ErrorParams) msg.obj;
+                Log.d(TAG, String.format("Receive ERROR message. %s. %s. %s", params.threadName
+                                                                            , params.desc, params.task.getUrl()));
+                imageManager.onDownloadDone(params.task, ImageManager.ERROR, null);
+                imageManager.setThreadStatus(params.threadName, ImageDownloadThread.IDLE_STATUS);
                 break;
+            }
             case THREAD_QUITED:
-                ThreadQuitedParams threadQuitedParams = (ThreadQuitedParams) msg.obj;
-                imageManager.removeThread(threadQuitedParams.threadName);
-                Log.d(TAG, String.format("Receive THREAD_QUITED message. %s", threadQuitedParams.threadName));
+            {
+                ThreadQuitedParams params = (ThreadQuitedParams) msg.obj;
+                imageManager.removeThread(params.threadName);
+                Log.d(TAG, String.format("Receive THREAD_QUITED message. %s", params.threadName));
                 break;
+            }
             default:
                 Log.e(TAG, String.format("Unknown message type %d.", msg.what));
                 break;

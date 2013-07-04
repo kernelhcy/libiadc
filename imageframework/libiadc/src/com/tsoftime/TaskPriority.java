@@ -1,4 +1,4 @@
-package com.tsoftime.messeage.params;
+package com.tsoftime;
 
 /**
  * User: huangcongyu2006

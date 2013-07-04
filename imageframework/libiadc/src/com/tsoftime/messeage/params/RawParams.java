@@ -1,5 +1,7 @@
 package com.tsoftime.messeage.params;
 
+import com.tsoftime.ImageTask;
+
 /**
  * The parent of all the message parameters object.
  *
@@ -9,5 +11,5 @@ package com.tsoftime.messeage.params;
 public class RawParams
 {
     public String threadName;       // The name of the thread
-    public String url;              // The url of the image
+    public ImageTask task;          // The url of the image
 }

@@ -8,7 +8,7 @@ import android.graphics.Bitmap;
  * User: huangcongyu2006
  * Date: 12-6-24 PM7:45
  */
-public class ImageDownloadDoneParams extends RawParams
+public class DownloadDoneParams extends RawParams
 {
     public String path;
     public Bitmap bmp;
