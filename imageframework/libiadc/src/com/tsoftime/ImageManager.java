@@ -6,6 +6,7 @@ import android.os.Message;
 import android.util.Log;
 import com.tsoftime.cache.ImageCacheManager;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -68,6 +69,14 @@ public class ImageManager
             return;
         }
 
+        // If we already have this task, just return
+        if (newTasksQueues.findTask(url, priority) != null) return;
+        for (ImageTask t : mRunningTasks) {
+            if (t.getUrl().equals(url) && t.getPriority() == priority) {
+                return;
+            }
+        }
+
         // create a new task
         Log.d(TAG, String.format("get image %s %s", url, priority.toString()));
         ImageTask task = new ImageTask(url, params, callBack, priority, expireTime);
@@ -124,6 +133,7 @@ public class ImageManager
                 Message msg = t.getHandler().obtainMessage(ImageDownloadThreadHandler.DOWNLOAD_IMAGE);
                 msg.obj = task;
                 t.getHandler().sendMessage(msg);
+                mRunningTasks.add(task);
             }
         }
     }
@@ -134,6 +144,7 @@ public class ImageManager
     private ImageManager()
     {
         this.newTasksQueues = new ImageTaskQueues();
+        this.mRunningTasks = new ArrayList<ImageTask>();
         this.handler = new ImageManagerHandler(this);
 
         this.mDownloadThreadNumber = 1;
@@ -232,15 +243,18 @@ public class ImageManager
     {
         if (task == null) return;
         task.onDownloadingDone(status, bmp);
+        mRunningTasks.remove(task);
+        runTasks();
     }
 
 
     private ImageTaskQueues newTasksQueues;                         // The new tasks queue.
+    private ArrayList<ImageTask> mRunningTasks;                     // the running tasks
 
     private ImageManagerHandler handler;
 
     private int mDownloadThreadNumber;                               // the number of the download threads.
-    private HashMap<String, ImageDownloadThread> threads;           // download threads
+    private HashMap<String, ImageDownloadThread> threads;            // download threads
 
     private static ImageManager mInstance = null;
 

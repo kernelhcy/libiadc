@@ -69,6 +69,7 @@ class ImageManagerHandler extends Handler
                 imageManager.onDownloadDone(params.task
                                             , ImageManager.SUCCESS
                                             , params.bmp);
+                imageManager.runTasks();
                 break;
             }
             case DOWNLOADING_PROGRESS:
@@ -86,6 +87,7 @@ class ImageManagerHandler extends Handler
                                                                             , params.desc, params.task.getUrl()));
                 imageManager.onDownloadDone(params.task, ImageManager.ERROR, null);
                 imageManager.setThreadStatus(params.threadName, ImageDownloadThread.IDLE_STATUS);
+                imageManager.runTasks();
                 break;
             }
             case THREAD_QUITED:
@@ -97,11 +99,9 @@ class ImageManagerHandler extends Handler
             }
             default:
                 Log.e(TAG, String.format("Unknown message type %d.", msg.what));
+                imageManager.runTasks();
                 break;
         }
-
-        // Maybe some download thread is idle, try to run tasks on these idle threads if there are more tasks.
-        imageManager.runTasks();
     }
     private static final String TAG = ImageManagerHandler.class.getSimpleName();
     private ImageManager imageManager;
