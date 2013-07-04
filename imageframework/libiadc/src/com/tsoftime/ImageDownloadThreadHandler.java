@@ -96,19 +96,32 @@ class ImageDownloadThreadHandler extends Handler
         }
         String url = mCurrTask.getUrl();
         String filePath = ImageCacheManager.getInstance().getImageFilePath(url);
-        if (filePath != null) {
-            Log.d(TAG, String.format("%s downloads %s, store in %s",
-                                        getLooper().getThread().getName(), url, filePath));
-        } else {
+        if (filePath == null) {
             sendError(-1, "No storage", mCurrTask);
+            return;
         }
 
         // find the image from the cache.
         boolean cachedInFileSystem = mImageCacheManager.isCachedInFileSystem(url, mCurrTask.getExpire());
         // try to download the image...
-        if (!cachedInFileSystem && !downloadImage(filePath)) return;
+        if (!cachedInFileSystem) {
+            Log.d(TAG, String.format("Downloading %s, store in %s", getLooper().getThread().getName(), url, filePath));
+            if (!downloadImage(filePath)) return;
+        } else {
+            Log.d(TAG, String.format("Cached %s, store in %s", getLooper().getThread().getName(), url, filePath));
+        }
 
-        Bitmap image = BitmapFactory.decodeFile(filePath);
+        // prevent OOM
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(filePath, opts);
+        int maxSize = opts.outWidth > opts.outHeight ? opts.outWidth : opts.outHeight;
+        if (maxSize > 480) {
+            opts.inSampleSize = maxSize / 480 + 1;
+        }
+        opts.inJustDecodeBounds = false;
+
+        Bitmap image = BitmapFactory.decodeFile(filePath, opts);
 
         if (image == null) {
             sendError(-1, "Deocde image from file error.", mCurrTask);
@@ -141,8 +154,6 @@ class ImageDownloadThreadHandler extends Handler
             }
 
             total = connection.getContentLength();
-            String contentType = connection.getContentType();
-            Log.d(TAG, contentType);
             InputStream is = (InputStream) connection.getContent();
 
             File dir = outFile.getParentFile();

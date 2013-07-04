@@ -7,7 +7,6 @@ import android.util.Log;
 import com.tsoftime.cache.ImageCacheManager;
 
 import java.util.HashMap;
-import java.util.PriorityQueue;
 
 /**
  * ImageManager
@@ -137,7 +136,7 @@ public class ImageManager
         this.newTasksQueues = new ImageTaskQueues();
         this.handler = new ImageManagerHandler(this);
 
-        this.downloadThreadNumber = 1;
+        this.mDownloadThreadNumber = 1;
         this.threads = new HashMap<String, ImageDownloadThread>();
 
         initDownloadTreads();
@@ -159,7 +158,7 @@ public class ImageManager
      */
     public void setDownloadThreadNumber(int number)
     {
-        this.downloadThreadNumber = number;
+        this.mDownloadThreadNumber = number;
         initDownloadTreads();
     }
 
@@ -176,11 +175,10 @@ public class ImageManager
         threads.clear();
 
         // create new download threads
-        for(int i = 0; i < downloadThreadNumber; ++i) {
-            ImageDownloadThread t = new ImageDownloadThread(handler);
-            t.setName(String.format("ImageDownloadThread-%d-%d", System.currentTimeMillis(), i));
-            PriorityQueue<ImageTask> queue = new PriorityQueue<ImageTask>();
+        for(int i = 0; i < mDownloadThreadNumber; ++i) {
+            ImageDownloadThread t = new ImageDownloadThread(String.format("ImageDownloadThread-%d", i), handler);
             threads.put(t.getName(), t);
+            Log.d(TAG, String.format("Create thread %s.", t.getName()));
             t.start();
             t.getLooper();  // wait the thread to start up
         }
@@ -241,7 +239,7 @@ public class ImageManager
 
     private ImageManagerHandler handler;
 
-    private int downloadThreadNumber;                               // the number of the download threads.
+    private int mDownloadThreadNumber;                               // the number of the download threads.
     private HashMap<String, ImageDownloadThread> threads;           // download threads
 
     private static ImageManager mInstance = null;

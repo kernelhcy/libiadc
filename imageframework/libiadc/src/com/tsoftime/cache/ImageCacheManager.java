@@ -49,7 +49,7 @@ public class ImageCacheManager
      * We use the md5 value of the url to create the file path.
      * If the md5 value of the url is '5d41402abc4b2a76b9719d911017c592', the file path will be
      * /5/d/4/1402abc4b2a76b9719d911017c592.
-     * @param url
+     * @param url the url eg. http://server.com/hello.jpg
      * @return if the storage is not available, null will be returned;
      */
     public String getImageFilePath(String url)
@@ -80,6 +80,11 @@ public class ImageCacheManager
             path.append('/').append(sb.charAt(1));
             path.append('/').append(sb.charAt(2));
             path.append('/').append(sb.substring(3, sb.length()));
+            if (url.lastIndexOf('.') > 0) {
+                path.append(url.substring(url.lastIndexOf('.')).toLowerCase());           // append the file ext
+            } else {
+                path.append(".jpg");
+            }
             filePath = path.toString();
             mFilePathCache.put(url, filePath);
             return filePath;

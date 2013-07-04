@@ -17,9 +17,9 @@ class ImageDownloadThread extends HandlerThread
     public static final int RUNNING_STATUS = 99;    // the thread is downloading an image.
     public static final int QUITING_STATUS = 98;    // the thread is quiting.
 
-    public ImageDownloadThread(ImageManagerHandler h)
+    public ImageDownloadThread(String name, ImageManagerHandler h)
     {
-        super("ImageDownloadThread");
+        super(name);
         this.imageManagerHandler = h;
         this.status = IDLE_STATUS;
     }
