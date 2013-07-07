@@ -73,6 +73,7 @@ public class ImageManager
         if (newTasksQueues.findTask(url, priority) != null) return;
         for (ImageTask t : mRunningTasks) {
             if (t.getUrl().equals(url) && t.getPriority() == priority) {
+                t.addCallback(callBack, params);
                 return;
             }
         }

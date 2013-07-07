@@ -140,6 +140,11 @@ public class ImageCacheManager
         new CacheSizeCalculator(handler).start();
     }
 
+    public boolean isCalculatingCacheSize()
+    {
+        return mIsCalculatingCacheSize;
+    }
+
     /**
      * The cache size calculator
      *
@@ -158,7 +163,7 @@ public class ImageCacheManager
             synchronized (ImageCacheManager.this) {
                 if (mIsCalculatingCacheSize) {
                     if (mResultHandler != null) {
-                        mResultHandler.obtainMessage(IMAGE_CACHE_SIZE_CALCULATE_DONE, 0).sendToTarget();
+                        mResultHandler.obtainMessage(IMAGE_CACHE_SIZE_CALCULATE_DONE, 0l).sendToTarget();
                     }
                     return;
                 }
@@ -169,7 +174,7 @@ public class ImageCacheManager
                 externalCacheDir = context.getCacheDir();
                 if (externalCacheDir == null) {
                     if (mResultHandler != null) {
-                        mResultHandler.obtainMessage(IMAGE_CACHE_SIZE_CALCULATE_DONE, 0).sendToTarget();
+                        mResultHandler.obtainMessage(IMAGE_CACHE_SIZE_CALCULATE_DONE, 0l).sendToTarget();
                     }
                     return ;
                 }
@@ -177,7 +182,7 @@ public class ImageCacheManager
             File cacheDir = new File(externalCacheDir.getAbsolutePath() + mImageStoreDir);
             if (!cacheDir.exists()) {
                 if (mResultHandler != null) {
-                    mResultHandler.obtainMessage(IMAGE_CACHE_SIZE_CALCULATE_DONE, 0).sendToTarget();
+                    mResultHandler.obtainMessage(IMAGE_CACHE_SIZE_CALCULATE_DONE, 0l).sendToTarget();
                 }
                 return;
             }
@@ -186,7 +191,7 @@ public class ImageCacheManager
             mIsCalculatingCacheSize = false;
             Log.d(TAG, String.format("Cache size %d", mCacheSize));
             if (mResultHandler != null) {
-                mResultHandler.obtainMessage(IMAGE_CACHE_SIZE_CALCULATE_DONE, new Long(mCacheSize)).sendToTarget();
+                mResultHandler.obtainMessage(IMAGE_CACHE_SIZE_CALCULATE_DONE, mCacheSize).sendToTarget();
             }
         }
 

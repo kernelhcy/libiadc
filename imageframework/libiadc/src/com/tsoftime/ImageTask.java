@@ -2,6 +2,7 @@ package com.tsoftime;
 
 import android.graphics.Bitmap;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -18,8 +19,8 @@ public class ImageTask
         this.mUrl = url;
         this.mPriority = priority;
         this.mExpire = expire;
-        this.mCallBack = callBack;
-        this.mParams = params;
+        this.mCallBacks = new ArrayList<ImageTaskCallBackAndParams>();
+        this.addCallback(callBack, params);
     }
 
     public ImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack)
@@ -34,7 +35,9 @@ public class ImageTask
      */
     public void onDownloadingProgress(int total, int hasRead)
     {
-        mCallBack.onGettingProgress(total, hasRead, mParams);
+        for (ImageTaskCallBackAndParams cp : mCallBacks) {
+            cp.mCallBack.onGettingProgress(total, hasRead, cp.mParams);
+        }
     }
 
     /**
@@ -44,9 +47,18 @@ public class ImageTask
      */
     public void onDownloadingDone(int status, Bitmap bmp)
     {
-        mCallBack.onDownloadingDone(status, bmp, mParams);
+        for (ImageTaskCallBackAndParams cp : mCallBacks) {
+            cp.mCallBack.onDownloadingDone(status, bmp, cp.mParams);
+        }
     }
 
+    public void addCallback(ImageTaskCallBack callBack, HashMap<String, Object> params)
+    {
+        ImageTaskCallBackAndParams cp = new ImageTaskCallBackAndParams();
+        cp.mCallBack = callBack;
+        cp.mParams = params;
+        this.mCallBacks.add(cp);
+    }
 
     public String getUrl()
     {
@@ -63,9 +75,14 @@ public class ImageTask
         return mExpire;
     }
 
+    private class ImageTaskCallBackAndParams
+    {
+        ImageTaskCallBack mCallBack;
+        HashMap<String, Object> mParams;
+    }
+
     private String mUrl;
     private TaskPriority mPriority;
     private long mExpire;
-    private HashMap<String, Object> mParams;
-    private ImageTaskCallBack mCallBack;
+    private ArrayList<ImageTaskCallBackAndParams> mCallBacks;
 }
