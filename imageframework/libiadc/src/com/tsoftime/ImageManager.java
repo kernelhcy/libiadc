@@ -2,9 +2,9 @@ package com.tsoftime;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import com.tsoftime.cache.ImageCacheManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
