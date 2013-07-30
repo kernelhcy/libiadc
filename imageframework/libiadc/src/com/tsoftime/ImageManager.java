@@ -109,6 +109,16 @@ public class ImageManager
         newTasksQueues.clear();
     }
 
+    public int getImageMaxSize()
+    {
+        return mImageMaxSize;
+    }
+
+    public void setImageMaxSize(int mImageMaxSize)
+    {
+        this.mImageMaxSize = mImageMaxSize;
+    }
+
     /*
      * *************************************
      *  Above is ALL the public interfaces.
@@ -258,6 +268,8 @@ public class ImageManager
     private HashMap<String, ImageDownloadThread> threads;            // download threads
 
     private static ImageManager mInstance = null;
+
+    private int mImageMaxSize = 512;
 
     private static final String TAG = ImageManager.class.getSimpleName();
 }

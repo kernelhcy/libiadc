@@ -115,10 +115,11 @@ class ImageDownloadThreadHandler extends Handler
         opts.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(filePath, opts);
         int maxSize = opts.outWidth > opts.outHeight ? opts.outWidth : opts.outHeight;
-        if (maxSize > 480) {
-            opts.inSampleSize = maxSize / 480 + 1;
+        if (maxSize > ImageManager.instance().getImageMaxSize()) {
+            opts.inSampleSize = maxSize / ImageManager.instance().getImageMaxSize();
         }
         opts.inJustDecodeBounds = false;
+        Log.d(TAG, String.format("image size %dx%d, sample size %d", opts.outWidth, opts.outHeight, opts.inSampleSize));
 
         Bitmap image = BitmapFactory.decodeFile(filePath, opts);
 
