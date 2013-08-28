@@ -24,9 +24,9 @@ class ImageTaskQueues
 {
     public ImageTaskQueues()
     {
-        defaultPriorityQueue = new LinkedList<ImageTask>();
-        highPriorityQueue = new LinkedList<ImageTask>();
-        lowPriorityQueue = new LinkedList<ImageTask>();
+        mDefaultPriorityQueue = new LinkedList<ImageTask>();
+        mHighPriorityQueue = new LinkedList<ImageTask>();
+        mLowPriorityQueue = new LinkedList<ImageTask>();
     }
 
     /**
@@ -36,12 +36,12 @@ class ImageTaskQueues
      */
     public ImageTask dequeue()
     {
-        if (highPriorityQueue.size() > 0) {
-            return highPriorityQueue.poll();
-        } else if (defaultPriorityQueue.size() > 0) {
-            return defaultPriorityQueue.poll();
-        } else if (lowPriorityQueue.size() > 0) {
-            return lowPriorityQueue.poll();
+        if (mHighPriorityQueue.size() > 0) {
+            return mHighPriorityQueue.poll();
+        } else if (mDefaultPriorityQueue.size() > 0) {
+            return mDefaultPriorityQueue.poll();
+        } else if (mLowPriorityQueue.size() > 0) {
+            return mLowPriorityQueue.poll();
         }
         return null;
     }
@@ -57,17 +57,17 @@ class ImageTaskQueues
         switch (priority)
         {
             case DEFAULT_PRIORITY:
-                for(ImageTask t : defaultPriorityQueue) {
+                for(ImageTask t : mDefaultPriorityQueue) {
                     if (t.getUrl().equals(url)) return t;
                 }
                 break;
             case HIGH_PRIORITY:
-                for(ImageTask t : highPriorityQueue) {
+                for(ImageTask t : mHighPriorityQueue) {
                     if (t.getUrl().equals(url)) return t;
                 }
                 break;
             case LOW_PRIORITY:
-                for(ImageTask t : lowPriorityQueue) {
+                for(ImageTask t : mLowPriorityQueue) {
                     if (t.getUrl().equals(url)) return t;
                 }
                 break;
@@ -75,6 +75,32 @@ class ImageTaskQueues
                 break;
         }
         return null;
+    }
+
+    /**
+     * Remove the task of taskId
+     * @param taskId
+     */
+    public void removeTask(int taskId)
+    {
+        for(ImageTask t : mDefaultPriorityQueue) {
+            if (t.getTaskId() == taskId) {
+                mDefaultPriorityQueue.remove(t);
+                break;
+            }
+        }
+        for(ImageTask t : mHighPriorityQueue) {
+            if (t.getTaskId() == taskId) {
+                mDefaultPriorityQueue.remove(t);
+                break;
+            }
+        }
+        for(ImageTask t : mLowPriorityQueue) {
+            if (t.getTaskId() == taskId) {
+                mDefaultPriorityQueue.remove(t);
+                break;
+            }
+        }
     }
 
     /**
@@ -86,14 +112,14 @@ class ImageTaskQueues
         switch (task.getPriority())
         {
             case HIGH_PRIORITY:
-                highPriorityQueue.offer(task);
+                mHighPriorityQueue.offer(task);
                 break;
             case LOW_PRIORITY:
-                lowPriorityQueue.offer(task);
+                mLowPriorityQueue.offer(task);
                 break;
             case DEFAULT_PRIORITY:
             default:
-                defaultPriorityQueue.offer(task);
+                mDefaultPriorityQueue.offer(task);
                 break;
         }
     }
@@ -104,7 +130,7 @@ class ImageTaskQueues
      */
     public int size()
     {
-        return defaultPriorityQueue.size() + highPriorityQueue.size() + lowPriorityQueue.size();
+        return mDefaultPriorityQueue.size() + mHighPriorityQueue.size() + mLowPriorityQueue.size();
     }
 
     /**
@@ -112,9 +138,9 @@ class ImageTaskQueues
      */
     public void clear()
     {
-        defaultPriorityQueue.clear();
-        lowPriorityQueue.clear();
-        highPriorityQueue.clear();
+        mDefaultPriorityQueue.clear();
+        mLowPriorityQueue.clear();
+        mHighPriorityQueue.clear();
     }
 
     /**
@@ -124,18 +150,18 @@ class ImageTaskQueues
      */
     public boolean remove(ImageTask task)
     {
-        if (highPriorityQueue.contains(task)) {
-            return highPriorityQueue.remove(task);
-        } else if (lowPriorityQueue.contains(task)) {
-            return lowPriorityQueue.remove(task);
-        } else if (defaultPriorityQueue.contains(task)) {
-            return defaultPriorityQueue.remove(task);
+        if (mHighPriorityQueue.contains(task)) {
+            return mHighPriorityQueue.remove(task);
+        } else if (mLowPriorityQueue.contains(task)) {
+            return mLowPriorityQueue.remove(task);
+        } else if (mDefaultPriorityQueue.contains(task)) {
+            return mDefaultPriorityQueue.remove(task);
         }
         return false;
     }
 
-    private Queue<ImageTask> defaultPriorityQueue;      // the default priority queue
-    private Queue<ImageTask> highPriorityQueue;         // the high priority queue
-    private Queue<ImageTask> lowPriorityQueue;          // the low priority queue
+    private Queue<ImageTask> mDefaultPriorityQueue;      // the default priority queue
+    private Queue<ImageTask> mHighPriorityQueue;         // the high priority queue
+    private Queue<ImageTask> mLowPriorityQueue;          // the low priority queue
 }
 

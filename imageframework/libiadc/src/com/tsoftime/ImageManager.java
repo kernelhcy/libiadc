@@ -2,7 +2,6 @@ package com.tsoftime;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
@@ -13,9 +12,9 @@ import java.util.HashMap;
  * ImageManager
  *
  * Manage the images' downloading and caching.
- * The image manager will start some download threads to download images.
- * The default number of download threads is one.
- * You can set the number of download threads by yourself. More download threads, more memory is needed!
+ * The image manager will start some download mThreads to download images.
+ * The default number of download mThreads is one.
+ * You can set the number of download mThreads by yourself. More download mThreads, more memory is needed!
  *
  * User: huangcongyu2006
  * Date: 12-6-23 AM9:40
@@ -60,31 +59,34 @@ public class ImageManager
      * @param expireTime    the expire time(second). The image will be cached until the expire time exceeds.
      *                      After the expire time exceeds, the image will be removed from the cache and get a new
      *                      copy from the remote server.
+     * @return the id of the task, or -1 for error.
      */
-    public void dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
+    public int dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
                                     , TaskPriority priority, long expireTime)
     {
         if (url == null) {
             callBack.onDownloadingDone(NO_SUCH_IMAGE, null, params);
-            return;
+            return -1;
         }
 
-        // If we already have this task, just return
-        if (newTasksQueues.findTask(url, priority) != null) return;
-        for (ImageTask t : mRunningTasks) {
-            if (t.getUrl().equals(url) && t.getPriority() == priority) {
-                t.addCallback(callBack, params);
-                return;
-            }
-        }
+//        // If we already have this task, just return
+//        if (mNewTasksQueues.findTask(url, priority) != null) return;
+//        // If this task is already running.
+//        for (ImageTask t : mRunningTasks) {
+//            if (t.getUrl().equals(url) && t.getPriority() == priority) {
+//                t.addCallback(callBack, params);
+//                return;
+//            }
+//        }
 
         // create a new task
         Log.d(TAG, String.format("get image %s %s", url, priority.toString()));
         ImageTask task = new ImageTask(url, params, callBack, priority, expireTime);
-        newTasksQueues.enqueue(task);
+        mNewTasksQueues.enqueue(task);
 
         // run the tasks.
         runTasks();
+        return task.getTaskId();
     }
 
     /**
@@ -93,10 +95,20 @@ public class ImageManager
      * @param url       the url of the image. like : "http://www.google.com/images/1.png"
      * @param params    the parameters you want to receive in the ImageTaskCallBack callbacks.
      * @param callBack  the callback. Used to notify you the progress.
+     * @return the id of the task, or -1 for error.
      */
-    public void dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack)
+    public int dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack)
     {
-        dispatchImageTask(url, params, callBack, TaskPriority.DEFAULT_PRIORITY, Long.MAX_VALUE);
+        return dispatchImageTask(url, params, callBack, TaskPriority.DEFAULT_PRIORITY, Long.MAX_VALUE);
+    }
+
+    /**
+     * 取消一个任务
+     * @param taskId
+     */
+    public void cancelTask(int taskId)
+    {
+        mNewTasksQueues.removeTask(taskId);
     }
 
     /**
@@ -106,7 +118,7 @@ public class ImageManager
      */
     public void removeAllTasks()
     {
-        newTasksQueues.clear();
+        mNewTasksQueues.clear();
     }
 
     public int getImageMaxSize()
@@ -133,18 +145,17 @@ public class ImageManager
      */
     void runTasks()
     {
-        for(ImageDownloadThread t : threads.values())
+        for(ImageDownloadThread t : mThreads.values())
         {
-            if (newTasksQueues.size() <= 0) break;
+            if (mNewTasksQueues.size() <= 0) break;
             if (t.getStatus() == ImageDownloadThread.IDLE_STATUS) {
                 // only here, the thread can be set to RUNNING
                 t.setStatus(ImageDownloadThread.RUNNING_STATUS);
-                ImageTask task = newTasksQueues.dequeue();
+                ImageTask task = mNewTasksQueues.dequeue();
                 if(task == null) break;     // no more task.
                 Message msg = t.getHandler().obtainMessage(ImageDownloadThreadHandler.DOWNLOAD_IMAGE);
                 msg.obj = task;
                 t.getHandler().sendMessage(msg);
-                mRunningTasks.add(task);
             }
         }
     }
@@ -154,12 +165,11 @@ public class ImageManager
      */
     private ImageManager()
     {
-        this.newTasksQueues = new ImageTaskQueues();
-        this.mRunningTasks = new ArrayList<ImageTask>();
-        this.handler = new ImageManagerHandler(this);
+        this.mNewTasksQueues = new ImageTaskQueues();
+        this.mHandler = new ImageManagerHandler(this);
 
         this.mDownloadThreadNumber = 1;
-        this.threads = new HashMap<String, ImageDownloadThread>();
+        this.mThreads = new HashMap<String, ImageDownloadThread>();
 
         initDownloadTreads();
     }
@@ -167,14 +177,14 @@ public class ImageManager
     /**
      * Set the download thread number.
      *
-     * This function will kill all the old threads and create `number` new threads.
-     * The old threads will finish all the downloading tasks which are being executed.
+     * This function will kill all the old mThreads and create `number` new mThreads.
+     * The old mThreads will finish all the downloading tasks which are being executed.
      *
      * <b>NOTE:</b>
-     *  If you start more download threads, the images will be downloaded faster. And more memory will be used.
-     *  If the images are too large, when the download threads have downloaded them, they will eat many memory
+     *  If you start more download mThreads, the images will be downloaded faster. And more memory will be used.
+     *  If the images are too large, when the download mThreads have downloaded them, they will eat many memory
      *  after being converted to bitmap.
-     *  So, you should have a deep look at how many download threads you need.
+     *  So, you should have a deep look at how many download mThreads you need.
      *
      * @param number
      */
@@ -185,21 +195,21 @@ public class ImageManager
     }
 
     /**
-     * Initial the download threads
+     * Initial the download mThreads
      */
     private void initDownloadTreads()
     {
-        // quit the old threads.
-        for(ImageDownloadThread t : threads.values()) {
+        // quit the old mThreads.
+        for(ImageDownloadThread t : mThreads.values()) {
             if (t.getHandler() == null) continue;
             t.getHandler().sendEmptyMessage(ImageDownloadThreadHandler.QUIT);
         }
-        threads.clear();
+        mThreads.clear();
 
-        // create new download threads
+        // create new download mThreads
         for(int i = 0; i < mDownloadThreadNumber; ++i) {
-            ImageDownloadThread t = new ImageDownloadThread(String.format("ImageDownloadThread-%d", i), handler);
-            threads.put(t.getName(), t);
+            ImageDownloadThread t = new ImageDownloadThread(String.format("ImageDownloadThread-%d", i), mHandler);
+            mThreads.put(t.getName(), t);
             Log.d(TAG, String.format("Create thread %s.", t.getName()));
             t.start();
             t.getLooper();  // wait the thread to start up
@@ -214,7 +224,7 @@ public class ImageManager
      */
     void removeThread(String threadName)
     {
-        ImageDownloadThread t = threads.remove(threadName);
+        mThreads.remove(threadName);
     }
 
     /**
@@ -224,7 +234,7 @@ public class ImageManager
      */
     void setThreadStatus(String threadName, int newStatus)
     {
-        ImageDownloadThread t = threads.get(threadName);
+        ImageDownloadThread t = mThreads.get(threadName);
         if (t != null) {
             t.setStatus(newStatus);
         }
@@ -254,18 +264,16 @@ public class ImageManager
     {
         if (task == null) return;
         task.onDownloadingDone(status, bmp);
-        mRunningTasks.remove(task);
         runTasks();
     }
 
 
-    private ImageTaskQueues newTasksQueues;                         // The new tasks queue.
-    private ArrayList<ImageTask> mRunningTasks;                     // the running tasks
+    private ImageTaskQueues mNewTasksQueues;                        // The new tasks queue.
 
-    private ImageManagerHandler handler;
+    private ImageManagerHandler mHandler;
 
-    private int mDownloadThreadNumber;                               // the number of the download threads.
-    private HashMap<String, ImageDownloadThread> threads;            // download threads
+    private int mDownloadThreadNumber;                              // the number of the download mThreads.
+    private HashMap<String, ImageDownloadThread> mThreads;          // download mThreads
 
     private static ImageManager mInstance = null;
 

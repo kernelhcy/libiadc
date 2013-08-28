@@ -75,6 +75,15 @@ public class ImageTask
         return mExpire;
     }
 
+    /**
+     * 返回任务的id。用于唯一标识该任务。
+     * @return
+     */
+    public int getTaskId()
+    {
+        return this.hashCode();
+    }
+
     private class ImageTaskCallBackAndParams
     {
         ImageTaskCallBack mCallBack;
