@@ -21,19 +21,13 @@ import java.util.HashMap;
  * User: huangcongyu2006
  * Date: 12-6-23 AM11:12
  */
-public class ImageTask implements Runnable, Comparable<ImageTask>
+public class ImageTask implements Runnable
 {
-    // 优先级
-    public static final int LOW_PRIORITY = -1;
-    public static final int DEFAULT_PRIORITY = 0;
-    public static final int HIGH_PRIORITY = 1;
-
     public ImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack, Handler handler
-                    , int priority, long expire)
+                    , long expire)
     {
         this.mHandler = handler;
         this.mUrl = url;
-        this.mPriority = priority;
         this.mExpire = expire;
         this.mCallBacks = new ArrayList<ImageTaskCallBackAndParams>();
         this.addCallback(callBack, params);
@@ -57,12 +51,6 @@ public class ImageTask implements Runnable, Comparable<ImageTask>
     public int getTaskId()
     {
         return this.hashCode();
-    }
-
-    @Override
-    public int compareTo(ImageTask imageTask)
-    {
-        return mPriority - imageTask.mPriority;
     }
 
     @Override
@@ -258,7 +246,6 @@ public class ImageTask implements Runnable, Comparable<ImageTask>
     }
 
     private String mUrl;
-    private int mPriority;
     private long mExpire;
     private ArrayList<ImageTaskCallBackAndParams> mCallBacks;
 

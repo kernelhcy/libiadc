@@ -57,14 +57,13 @@ public class ImageManager
      * @param url           the url of the image. like : "http://www.google.com/images/1.png"
      * @param params        the parameters you want to receive in the ImageTaskCallBack callbacks.
      * @param callBack      the callback. Used to notify you the progress.
-     * @param priority      the task priority.
      * @param expireTime    the expire time(second). The image will be cached until the expire time exceeds.
      *                      After the expire time exceeds, the image will be removed from the cache and get a new
      *                      copy from the remote server.
      * @return the id of the task, or -1 for error.
      */
     public int dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
-                                    , int priority, long expireTime)
+                                    , long expireTime)
     {
         if (url == null) {
             callBack.onDownloadingDone(NO_SUCH_IMAGE, null, params);
@@ -72,8 +71,8 @@ public class ImageManager
         }
 
         // create a new task
-        Log.d(TAG, String.format("get image %s %d", url, priority));
-        ImageTask task = new ImageTask(url, params, callBack, mHandler, priority, expireTime);
+        Log.d(TAG, String.format("get image %s", url));
+        ImageTask task = new ImageTask(url, params, callBack, mHandler, expireTime);
         mExecutor.execute(task);
         return task.getTaskId();
     }
@@ -89,7 +88,7 @@ public class ImageManager
      */
     public int dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack)
     {
-        return dispatchImageTask(url, params, callBack, ImageTask.DEFAULT_PRIORITY, Long.MAX_VALUE);
+        return dispatchImageTask(url, params, callBack, Long.MAX_VALUE);
     }
 
     /**
@@ -141,7 +140,7 @@ public class ImageManager
      */
     private ImageManager()
     {
-        this.mTaskQueue = new PriorityBlockingQueue<Runnable>();
+        this.mTaskQueue = new LinkedBlockingQueue<Runnable>();
         this.mExecutor = new ThreadPoolExecutor(1, 1, 1, TimeUnit.SECONDS, this.mTaskQueue);
 
         this.mHandler = new Handler();
@@ -149,7 +148,7 @@ public class ImageManager
 
     private int mImageMaxSize = 1024;
 
-    private PriorityBlockingQueue<Runnable> mTaskQueue;             // THe task queue;
+    private BlockingQueue<Runnable> mTaskQueue;             // THe task queue;
     private Handler mHandler;
 
     private static ImageManager mInstance = null;
