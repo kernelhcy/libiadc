@@ -240,6 +240,7 @@ public class ImageCacheManager
                     return;
                 }
                 mIsClearing = true;
+                mFilePathCache.clear();
             }
             File externalCacheDir = context.getExternalCacheDir();
             if (externalCacheDir == null) {
