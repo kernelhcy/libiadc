@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
 import android.widget.*;
 
 import java.util.ArrayList;
@@ -27,8 +26,6 @@ public class ImageListViewAdaper extends BaseAdapter
         datas = new ArrayList<DownloadProgress>();
         inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         date = new int[300];
-        firstTime = new boolean[300];
-        for(int i = 0; i < firstTime.length; ++i) firstTime[i] = true;
         date[0] = 1;
     }
 
@@ -95,29 +92,18 @@ public class ImageListViewAdaper extends BaseAdapter
                                     , data.hasRead, data.total));
         holder.urlTv.setText(urls.get(i));
 
-        // 调用getImage获取图片
-        holder.iv.setImageResource(R.drawable.default_bg);
-        ImageManager imageManager = ImageManager.instance();
-        HashMap<String, Object> params = new HashMap<String, Object>();
-        params.put("index", i);
-        imageManager.dispatchImageTask(urls.get(i), params, callBack
-                                    , TaskPriority.DEFAULT_PRIORITY);
+        if (holder.url == null || !holder.url.equals(urls.get(i))) {
+            // 调用getImage获取图片
+            holder.url = urls.get(i);
+            holder.iv.setImageResource(R.drawable.default_bg);
+            ImageManager imageManager = ImageManager.instance();
+            HashMap<String, Object> params = new HashMap<String, Object>();
+            params.put("index", i);
+            if (holder.taskId != -1) imageManager.cancelTask(holder.taskId);
+            holder.taskId = imageManager.dispatchImageTask(urls.get(i), params, callBack);
+        }
 
         return view;
-    }
-
-    /**
-     * 下载第index张图片
-     * @param index
-     */
-    public void downloadImage(int index)
-    {
-        if (index < 0) return;
-        ImageManager imageManager = ImageManager.instance();
-        HashMap<String, Object> params = new HashMap<String, Object>();
-        params.put("index", index);
-        imageManager.dispatchImageTask(urls.get(index), params, callBack
-                                            , TaskPriority.DEFAULT_PRIORITY);
     }
 
     private ArrayList<String> urls;
@@ -162,24 +148,19 @@ public class ImageListViewAdaper extends BaseAdapter
             int index = (Integer)params.get("index");
             wantedPosition = index - (listView.getFirstVisiblePosition() - listView.getHeaderViewsCount());
             View view = listView.getChildAt(wantedPosition);
+
             if (view!= null) {
                 // 下载完成。显示图片。
                 ViewHolder holder = (ViewHolder) view.getTag();
-                holder.iv.setImageBitmap(bmp);
-                if (firstTime[index]){
-                    animation = new AlphaAnimation(0f, 1.0f);
-                    animation.setDuration(200);
-                    animation.setFillAfter(true);
-                    holder.iv.startAnimation(animation);
-                    firstTime[index] = false;
-                }
                 holder.pb.setVisibility(View.GONE);
+                if (status == ImageManager.SUCCESS) {
+                    holder.iv.setImageBitmap(bmp);
+                }
                 /*
                  * 这里不对bmp参数做任何保存！让libiadc进行图片缓存处理。
                  */
             }
         }
-        private AlphaAnimation animation;
     }
     private ImageTaskCallBack callBack;
 
@@ -200,11 +181,13 @@ public class ImageListViewAdaper extends BaseAdapter
         ProgressBar pb;
         ImageView iv;
         TextView tv, urlTv;
+
+        int taskId = -1;
+        String url;
     }
 
     private ArrayList<DownloadProgress> datas;
     private ListView listView;
     private LayoutInflater inflater;
     private int[] date;
-    private boolean[] firstTime;
 }

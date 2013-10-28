@@ -84,19 +84,16 @@ public class ViewPagerAdapter extends BaseAdapter
         imageManager.removeAllTasks();
         HashMap<String, Object> params = new HashMap<String, Object>();
         params.put("index", i);
-        imageManager.dispatchImageTask(mUrls.get(i), params, mCallback
-                            , TaskPriority.DEFAULT_PRIORITY);
+        imageManager.dispatchImageTask(mUrls.get(i), params, mCallback);
         if (i - 1 >= 0) {
             params = new HashMap<String, Object>();
             params.put("index", i - 1);
-            imageManager.dispatchImageTask(mUrls.get(i - 1), params, mCallback
-                , TaskPriority.DEFAULT_PRIORITY);
+            imageManager.dispatchImageTask(mUrls.get(i - 1), params, mCallback);
         }
         if (i + 1 < mUrls.size()) {
             params = new HashMap<String, Object>();
             params.put("index", i + 1);
-            imageManager.dispatchImageTask(mUrls.get(i + 1), params, mCallback
-                , TaskPriority.DEFAULT_PRIORITY);
+            imageManager.dispatchImageTask(mUrls.get(i + 1), params, mCallback);
         }
 
         return view;

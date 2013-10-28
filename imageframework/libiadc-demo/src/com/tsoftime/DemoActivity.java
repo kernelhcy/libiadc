@@ -34,7 +34,6 @@ public class DemoActivity extends Activity
 
         // 初始化ImageManager。
         ImageManager.init(getApplicationContext());
-        ImageManager.instance().setDownloadThreadNumber(2);
 
         listView = (PullToRefreshListView) findViewById(R.id.listview);
         adaper = new ImageListViewAdaper(DemoActivity.this, listView);
@@ -114,38 +113,6 @@ public class DemoActivity extends Activity
                 Log.d(DemoActivity.class.getSimpleName(), String.format("url count %d", urls.size()));
 
                 listView.setAdapter(adaper);
-                listView.setFastScrollEnabled(true);
-                listView.setOnScrollListener(new AbsListView.OnScrollListener()
-                {
-                    private int firstVisibleItem;
-                    private int visibleItemCount;
-
-                    @Override
-                    public void onScrollStateChanged(AbsListView absListView, int scrollState)
-                    {
-                        ImageManager imageManager = ImageManager.instance();
-                        switch (scrollState) {
-                            case AbsListView.OnScrollListener.SCROLL_STATE_IDLE:
-                                //Log.d(DemoActivity.class.getSimpleName(), "Scroll view idle.");
-                                imageManager.removeAllTasks();
-                                for (int i = 0, j = firstVisibleItem - 1; i < visibleItemCount; ++i, ++j) {
-                                    Log.d(DemoActivity.class.getSimpleName(), String.format("downloading ... %d.jpg", j));
-                                    adaper.downloadImage(j);
-                                }
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-
-                    @Override
-                    public void onScroll(AbsListView absListView, int firstVisibleItem
-                        , int visibleItemCount, int totalItemCount)
-                    {
-                        this.firstVisibleItem = firstVisibleItem;
-                        this.visibleItemCount = visibleItemCount;
-                    }
-                });
                 listView.setOnRefreshListener(new PullToRefreshListView.OnRefreshListener()
                 {
                     @Override

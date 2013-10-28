@@ -54,7 +54,7 @@ public class ImageCacheManager
      * @param url the url eg. http://server.com/hello.jpg
      * @return if the storage is not available, null will be returned;
      */
-    public String getImageFilePath(String url)
+    synchronized public String getImageFilePath(String url)
     {
         // find from the cache
         String filePath = mFilePathCache.get(url);
@@ -106,7 +106,7 @@ public class ImageCacheManager
      * @param expire    the expire time of this image
      * @return
      */
-    public boolean isCachedInFileSystem(String url, long expire)
+    synchronized public boolean isCachedInFileSystem(String url, long expire)
     {
         String filePath = getImageFilePath(url);
         if (filePath == null) return false;
