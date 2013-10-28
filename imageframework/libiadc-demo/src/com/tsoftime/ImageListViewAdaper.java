@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.widget.*;
-import com.tsoftime.messeage.params.TaskPriority;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -82,7 +81,6 @@ public class ImageListViewAdaper extends BaseAdapter
             holder.pb = (ProgressBar) view.findViewById(R.id.listview_item_progressbar);
             holder.tv = (TextView) view.findViewById(R.id.listview_item_progressbar_label);
             holder.urlTv = (TextView) view.findViewById(R.id.listview_item_url_label);
-            holder.dateLabel = (TextView) view.findViewById(R.id.listview_item_date_label);
             view.setTag(holder);
         } else {
             holder = (ViewHolder) view.getTag();
@@ -96,23 +94,14 @@ public class ImageListViewAdaper extends BaseAdapter
         holder.tv.setText(String.format("%d%%        %d/%d", (int)((float)data.hasRead * 100 / (float)data.total)
                                     , data.hasRead, data.total));
         holder.urlTv.setText(urls.get(i));
-        holder.dateLabel.setVisibility(View.VISIBLE);
-        if (i > 0 && date[i] != date[i - 1]){
-            holder.dateLabel.setText(String.format("第%d天", getDate(i)));
-        } else {
-            if (i == 0) {
-                holder.dateLabel.setText(String.format("第%d天", getDate(i)));
-            } else {
-                holder.dateLabel.setVisibility(View.GONE);
-            }
-        }
+
         // 调用getImage获取图片
         holder.iv.setImageResource(R.drawable.default_bg);
         ImageManager imageManager = ImageManager.instance();
         HashMap<String, Object> params = new HashMap<String, Object>();
         params.put("index", i);
         imageManager.dispatchImageTask(urls.get(i), params, callBack
-                                    , TaskPriority.DEFAULT_PRIORITY, 60 * 60, 300);
+                                    , TaskPriority.DEFAULT_PRIORITY);
 
         return view;
     }
@@ -128,7 +117,7 @@ public class ImageListViewAdaper extends BaseAdapter
         HashMap<String, Object> params = new HashMap<String, Object>();
         params.put("index", index);
         imageManager.dispatchImageTask(urls.get(index), params, callBack
-                                            , TaskPriority.DEFAULT_PRIORITY, 60 * 60, 300);
+                                            , TaskPriority.DEFAULT_PRIORITY);
     }
 
     private ArrayList<String> urls;
@@ -210,7 +199,7 @@ public class ImageListViewAdaper extends BaseAdapter
     {
         ProgressBar pb;
         ImageView iv;
-        TextView tv, urlTv, dateLabel;
+        TextView tv, urlTv;
     }
 
     private ArrayList<DownloadProgress> datas;

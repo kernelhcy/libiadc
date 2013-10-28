@@ -92,14 +92,17 @@ public class ImageManager
     /**
      * Dispatch an image task using default priority and will never expire.
      *
+     *
      * @param url       the url of the image. like : "http://www.google.com/images/1.png"
      * @param params    the parameters you want to receive in the ImageTaskCallBack callbacks.
      * @param callBack  the callback. Used to notify you the progress.
+     * @param defaultPriority
      * @return the id of the task, or -1 for error.
      */
-    public int dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack)
+    public int dispatchImageTask(String url, HashMap<String, Object> params, ImageTaskCallBack callBack
+                                , TaskPriority defaultPriority)
     {
-        return dispatchImageTask(url, params, callBack, TaskPriority.DEFAULT_PRIORITY, Long.MAX_VALUE);
+        return dispatchImageTask(url, params, callBack, defaultPriority, Long.MAX_VALUE);
     }
 
     /**

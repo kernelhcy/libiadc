@@ -33,12 +33,10 @@ public class DemoActivity extends Activity
         setContentView(R.layout.main);
 
         // 初始化ImageManager。
-        ImageMangerConfig.instance().setMaxMemCacheSize(5);
         ImageManager.init(getApplicationContext());
         ImageManager.instance().setDownloadThreadNumber(2);
 
         listView = (PullToRefreshListView) findViewById(R.id.listview);
-        dateTextView = (TextView) findViewById(R.id.up_date_label);
         adaper = new ImageListViewAdaper(DemoActivity.this, listView);
 
         pd = new ProgressDialog(this);
@@ -65,7 +63,7 @@ public class DemoActivity extends Activity
         }
 
         // post the request.
-        net.post("tripsfun.com", 80, "/travel/get_travel_list", strParams, callback, params);
+        net.post("42.121.132.22", 3000, "/travel/get_travel_list", strParams, callback, params);
     }
 
     private class LoginTask extends AsyncTask<Void, Void, Void>
@@ -104,11 +102,11 @@ public class DemoActivity extends Activity
                     for (int i = 0; i < travels.length(); ++i) {
                         JSONObject travel = travels.getJSONObject(i);
                         if (travel == null) continue;
-                        String cover = travel.getString("cover");
+                        Log.d("DemoActivity", travel.toString(4));
+                        String cover = travel.getString("origin_cover");
                         if (cover == null) continue;
-                        String url =  "http://tripsfun.com" + cover;
-                        adaper.addURL(url);
-                        urls.add(url);
+                        adaper.addURL(cover);
+                        urls.add(cover);
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -146,13 +144,6 @@ public class DemoActivity extends Activity
                     {
                         this.firstVisibleItem = firstVisibleItem;
                         this.visibleItemCount = visibleItemCount;
-                        int position = firstVisibleItem;
-                        if (position <= 0) {
-                            dateTextView.setVisibility(View.GONE);
-                        } else {
-                            dateTextView.setVisibility(View.VISIBLE);
-                            dateTextView.setText(String.format("第%d天", adaper.getDate(position - 1)));
-                        }
                     }
                 });
                 listView.setOnRefreshListener(new PullToRefreshListView.OnRefreshListener()
@@ -185,6 +176,5 @@ public class DemoActivity extends Activity
     private ProgressDialog pd;
     private PullToRefreshListView listView;
     private ImageListViewAdaper adaper;
-    private TextView dateTextView;
 
 }

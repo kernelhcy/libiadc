@@ -9,7 +9,6 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import com.tsoftime.messeage.params.TaskPriority;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -67,13 +66,11 @@ public class ViewPagerAdapter extends BaseAdapter
             holder.pb = (ProgressBar) view.findViewById(R.id.listview_item_progressbar);
             holder.tv = (TextView) view.findViewById(R.id.listview_item_progressbar_label);
             holder.urlTv = (TextView) view.findViewById(R.id.listview_item_url_label);
-            holder.dateLabel = (TextView) view.findViewById(R.id.listview_item_date_label);
             view.setTag(holder);
             mViews[i] = view;
         } else {
             holder = (ViewHolder) view.getTag();
         }
-        holder.dateLabel.setText(String.format("第%d天", i + 1));
 
         // 释放所有的Bitmap，降低内存使用
         for(int j = 0; j < mViews.length; ++j) {
@@ -88,18 +85,18 @@ public class ViewPagerAdapter extends BaseAdapter
         HashMap<String, Object> params = new HashMap<String, Object>();
         params.put("index", i);
         imageManager.dispatchImageTask(mUrls.get(i), params, mCallback
-                            , TaskPriority.DEFAULT_PRIORITY, 60 * 60, 500);
+                            , TaskPriority.DEFAULT_PRIORITY);
         if (i - 1 >= 0) {
             params = new HashMap<String, Object>();
             params.put("index", i - 1);
             imageManager.dispatchImageTask(mUrls.get(i - 1), params, mCallback
-                , TaskPriority.DEFAULT_PRIORITY, 60 * 60, 500);
+                , TaskPriority.DEFAULT_PRIORITY);
         }
         if (i + 1 < mUrls.size()) {
             params = new HashMap<String, Object>();
             params.put("index", i + 1);
             imageManager.dispatchImageTask(mUrls.get(i + 1), params, mCallback
-                , TaskPriority.DEFAULT_PRIORITY, 60 * 60, 500);
+                , TaskPriority.DEFAULT_PRIORITY);
         }
 
         return view;
@@ -132,7 +129,7 @@ public class ViewPagerAdapter extends BaseAdapter
     {
         ProgressBar pb;
         ImageView iv;
-        TextView tv, urlTv, dateLabel;
+        TextView tv, urlTv;
     }
     private Context mContext;
     private ArrayList<String> mUrls;
