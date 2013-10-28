@@ -98,7 +98,12 @@ public class ImageManager
      */
     public int getImageMaxSize()
     {
-        return 1024;
+        return mImageMaxSize;
+    }
+
+    public void setImageMaxSize(int size)
+    {
+        mImageMaxSize = size;
     }
 
     /**
@@ -141,6 +146,8 @@ public class ImageManager
 
         this.mHandler = new Handler();
     }
+
+    private int mImageMaxSize = 1024;
 
     private PriorityBlockingQueue<Runnable> mTaskQueue;             // THe task queue;
     private Handler mHandler;
